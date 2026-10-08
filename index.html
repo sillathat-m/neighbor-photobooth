@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neighbor Photobooth</title>
+    <title>Neighbor Photobooth (IG Style)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600&display=swap');
         body {
@@ -55,15 +55,17 @@
 <body>
 
     <h2>📸 photobooth.</h2>
-    <p style="color:#666; margin-top:-10px;">ยิ้มสวยๆ แล้วกดถ่ายรูปได้เลย!</p>
+    <p style="color:#666; margin-top:-10px;">สไตล์ Instagram โพสต์</p>
 
     <div class="camera-container">
+        <!-- แก้ไข: เพิ่มวิดีโอแบบเต็มจอ -->
         <video id="camera" autoplay playsinline></video>
     </div>
 
     <button id="snapBtn" class="btn">📸 กดถ่ายรูป</button>
     <button id="printBtn" class="btn btn-print" style="display: none;">🖨️ พิมพ์ใบเสร็จ</button>
 
+    <!-- ปรับความสูง Canvas เป็น 600px ให้พอดีกับเลย์เอาต์ IG -->
     <canvas id="receiptCanvas" width="384" height="600"></canvas>
 
     <script>
@@ -73,43 +75,95 @@
         const canvas = document.getElementById('receiptCanvas');
         const ctx = canvas.getContext('2d');
 
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
+        // ดึงกล้อง (ปรับเป็น video: true เพื่อให้เทสบนคอมได้ด้วย)
+        navigator.mediaDevices.getUserMedia({ video: true })
             .then(stream => { video.srcObject = stream; })
             .catch(err => { alert("ไม่สามารถเปิดกล้องได้: " + err); });
 
         snapBtn.addEventListener('click', () => {
+            // พื้นหลังสีขาว
             ctx.fillStyle = "white";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+            // ==========================================
+            // 1. ส่วนหัว (Header) สไตล์ IG
+            // ==========================================
             ctx.fillStyle = "black";
-            ctx.textAlign = "center";
             
-            ctx.font = "bold 32px sans-serif";
-            ctx.fillText("neighbor.coffee", canvas.width / 2, 50);
-            
-            ctx.font = "20px sans-serif";
-            ctx.fillText("x Amber pastry", canvas.width / 2, 80);
+            // วาดรูปโปรไฟล์ (วงกลม)
+            ctx.beginPath();
+            ctx.arc(35, 40, 16, 0, Math.PI * 2);
+            ctx.lineWidth = 2;
+            ctx.stroke();
 
-            let today = new Date();
-            let dateStr = today.toLocaleDateString('th-TH') + " " + today.toLocaleTimeString('th-TH');
-            ctx.font = "16px sans-serif";
-            ctx.fillText(dateStr, canvas.width / 2, 110);
+            // ชื่อร้าน (Username)
+            ctx.textAlign = "left";
+            ctx.font = "bold 18px sans-serif";
+            ctx.fillText("neighbor.coffee", 62, 46);
 
-            ctx.lineWidth = 4;
-            ctx.strokeRect(32, 132, 320, 320);
-            
+            // จุด 3 จุด (Menu)
+            ctx.font = "bold 24px sans-serif";
+            ctx.fillText("⋮", 355, 48);
+
+            // ==========================================
+            // 2. ส่วนรูปถ่าย (Photo Area) 
+            // ==========================================
+            // ถ่ายรูปเต็มความกว้าง (384x384px)
             ctx.save();
             ctx.scale(-1, 1);
-            ctx.drawImage(video, -348, 136, 312, 312);
+            // พิกัดรูป: ขยับแกน Y ลงมาที่ 70
+            ctx.drawImage(video, -384, 70, 384, 384);
             ctx.restore();
 
-            applyDithering(canvas, ctx, 34, 136, 312, 312);
+            // แปลงภาพเป็นจุดไข่ปลา (Dithering) เฉพาะโซนรูปภาพ
+            applyDithering(canvas, ctx, 0, 70, 384, 384);
 
-            ctx.font = "bold 24px sans-serif";
-            ctx.fillText("HAVE A GOOD DAY!", canvas.width / 2, 510);
-            ctx.font = "18px sans-serif";
-            ctx.fillText("( ˘ ³˘)♥", canvas.width / 2, 550);
+            // วาดเส้นขอบบางๆ คั่นรูป (บน-ล่าง)
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, 70); ctx.lineTo(384, 70);
+            ctx.moveTo(0, 454); ctx.lineTo(384, 454);
+            ctx.stroke();
 
+            // ==========================================
+            // 3. ส่วนไอคอน (Action Bar)
+            // ==========================================
+            ctx.fillStyle = "black";
+            ctx.font = "28px sans-serif";
+            // ไอคอน: หัวใจ, คอมเมนต์, แชร์ (ใช้ Unicode ลายเส้นเพื่อความคมชัด)
+            ctx.fillText("♡  💬  ⌲", 15, 495);
+            
+            // ไอคอน Save ฝั่งขวา
+            ctx.textAlign = "right";
+            ctx.fillText("⚲", 370, 495);
+
+            // ==========================================
+            // 4. แคปชั่นและวันที่ (Caption & Date)
+            // ==========================================
+            ctx.textAlign = "left";
+            
+            // ยอด Like
+            ctx.font = "bold 15px sans-serif";
+            ctx.fillText("9,999 likes", 15, 525);
+            
+            // Username ในแคปชั่น
+            ctx.fillText("neighbor.coffee", 15, 548);
+            
+            // เนื้อหาแคปชั่น
+            ctx.font = "15px sans-serif";
+            let usernameWidth = ctx.measureText("neighbor.coffee ").width;
+            ctx.fillText(" HAVE A GOOD DAY! 🍰☕", 15 + usernameWidth, 548);
+
+            // วันที่
+            let today = new Date();
+            let dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+            let dateStr = today.toLocaleDateString('en-US', dateOptions).toUpperCase();
+            
+            ctx.font = "12px sans-serif";
+            ctx.fillStyle = "#333";
+            ctx.fillText(dateStr, 15, 575);
+
+            // โชว์ปุ่มสั่งปริ้น
             canvas.style.display = "block";
             printBtn.style.display = "inline-block";
         });
@@ -120,6 +174,7 @@
             window.location.href = "rawbt:data:image/png;base64," + base64Data;
         });
 
+        // ฟังก์ชัน Dithering แปลงภาพขาวดำ (เหมือนเดิม)
         function applyDithering(cvs, context, startX, startY, width, height) {
             const imgData = context.getImageData(startX, startY, width, height);
             const data = imgData.data;
