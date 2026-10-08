@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neighbor Photobooth</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600&display=swap');
+        body {
+            font-family: 'Kanit', sans-serif;
+            text-align: center;
+            background-color: #FDF4F5;
+            margin: 0;
+            padding: 20px;
+        }
+        h2 { color: #8B5A2B; margin-bottom: 10px; }
+        .camera-container {
+            margin: 0 auto 20px auto;
+            width: 320px;
+            height: 320px;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 4px solid #8B5A2B;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+        .btn {
+            background-color: #8B5A2B;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            font-family: 'Kanit', sans-serif;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(139, 90, 43, 0.3);
+            transition: 0.2s;
+            margin: 5px;
+        }
+        .btn:active { transform: scale(0.95); }
+        .btn-print { background-color: #4CAF50; box-shadow: 0 4px 10px rgba(76, 175, 80, 0.3); }
+        
+        #receiptCanvas {
+            display: none; 
+            margin: 20px auto;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>📸 photobooth.</h2>
+    <p style="color:#666; margin-top:-10px;">ยิ้มสวยๆ แล้วกดถ่ายรูปได้เลย!</p>
+
+    <div class="camera-container">
+        <video id="camera" autoplay playsinline></video>
+    </div>
+
+    <button id="snapBtn" class="btn">📸 กดถ่ายรูป</button>
+    <button id="printBtn" class="btn btn-print" style="display: none;">🖨️ พิมพ์ใบเสร็จ</button>
+
+    <canvas id="receiptCanvas" width="384" height="600"></canvas>
+
+    <script>
+        const video = document.getElementById('camera');
+        const snapBtn = document.getElementById('snapBtn');
+        const printBtn = document.getElementById('printBtn');
+        const canvas = document.getElementById('receiptCanvas');
+        const ctx = canvas.getContext('2d');
+
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
+            .then(stream => { video.srcObject = stream; })
+            .catch(err => { alert("ไม่สามารถเปิดกล้องได้: " + err); });
+
+        snapBtn.addEventListener('click', () => {
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = "black";
+            ctx.textAlign = "center";
+            
+            ctx.font = "bold 32px sans-serif";
+            ctx.fillText("neighbor.coffee", canvas.width / 2, 50);
+            
+            ctx.font = "20px sans-serif";
+            ctx.fillText("x Amber pastry", canvas.width / 2, 80);
+
+            let today = new Date();
+            let dateStr = today.toLocaleDateString('th-TH') + " " + today.toLocaleTimeString('th-TH');
+            ctx.font = "16px sans-serif";
+            ctx.fillText(dateStr, canvas.width / 2, 110);
+
+            ctx.lineWidth = 4;
+            ctx.strokeRect(32, 132, 320, 320);
+            
+            ctx.save();
+            ctx.scale(-1, 1);
+            ctx.drawImage(video, -348, 136, 312, 312);
+            ctx.restore();
+
+            applyDithering(canvas, ctx, 34, 136, 312, 312);
+
+            ctx.font = "bold 24px sans-serif";
+            ctx.fillText("HAVE A GOOD DAY!", canvas.width / 2, 510);
+            ctx.font = "18px sans-serif";
+            ctx.fillText("( ˘ ³˘)♥", canvas.width / 2, 550);
+
+            canvas.style.display = "block";
+            printBtn.style.display = "inline-block";
+        });
+
+        printBtn.addEventListener('click', () => {
+            let dataUrl = canvas.toDataURL("image/png");
+            let base64Data = dataUrl.split(',')[1];
+            window.location.href = "rawbt:data:image/png;base64," + base64Data;
+        });
+
+        function applyDithering(cvs, context, startX, startY, width, height) {
+            const imgData = context.getImageData(startX, startY, width, height);
+            const data = imgData.data;
+
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const idx = (y * width + x) * 4;
+                    const oldR = data[idx];
+                    const oldG = data[idx + 1];
+                    const oldB = data[idx + 2];
+                    
+                    const gray = Math.round(0.299 * oldR + 0.587 * oldG + 0.114 * oldB);
+                    const newColor = gray < 128 ? 0 : 255;
+                    const err = gray - newColor;
+
+                    data[idx] = data[idx + 1] = data[idx + 2] = newColor;
+
+                    distributeError(data, width, height, x + 1, y, err, 7 / 16);
+                    distributeError(data, width, height, x - 1, y + 1, err, 3 / 16);
+                    distributeError(data, width, height, x, y + 1, err, 5 / 16);
+                    distributeError(data, width, height, x + 1, y + 1, err, 1 / 16);
+                }
+            }
+            context.putImageData(imgData, startX, startY);
+        }
+
+        function distributeError(data, width, height, x, y, err, factor) {
+            if (x < 0 || x >= width || y >= height) return;
+            const idx = (y * width + x) * 4;
+            const adjustedErr = err * factor;
+            data[idx] = Math.min(255, Math.max(0, data[idx] + adjustedErr));
+            data[idx + 1] = Math.min(255, Math.max(0, data[idx + 1] + adjustedErr));
+            data[idx + 2] = Math.min(255, Math.max(0, data[idx + 2] + adjustedErr));
+        }
+    </script>
+</body>
+</html>
