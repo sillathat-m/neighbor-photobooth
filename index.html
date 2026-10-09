@@ -153,7 +153,7 @@
     <!-- Screen 0: Idle (Touch to start) -->
     <div id="screen-idle" class="screen active" onclick="startApp()">
         <div class="idle-title">
-            <span>neighbor</span><br>PHOTOBOOTH
+            <span>neighbor's</span><br>PHOTOBOOTH
         </div>
         <div class="idle-animation-box">
             <div class="film-strip">
@@ -163,7 +163,7 @@
                 <div style="background:#555;"></div>
             </div>
         </div>
-        <div class="pulse-text">แตะหน้าจอเพื่อเริ่มต้น</div>
+        <div class="pulse-text">แตะหน้าจอเพื่อเริ่มต้น<br>(Tap to Start)</div>
     </div>
 
     <!-- Screen 1: Home / Select Layout -->
@@ -301,7 +301,7 @@
             
             showScreen('screen-camera');
             startCaptureBtn.style.display = 'block';
-            statusText.innerText = "จัดท่าทางให้พร้อม แล้วกดเริ่ม!";
+            statusText.innerText = "จัดท่าให้พร้อม ยิ้มเยอะๆ แล้วกดเริ่ม!";
         }
 
         function setupCameraOverlay(layout) {
@@ -398,8 +398,7 @@
             } 
             else if (layout === 'strip3') {
                 ctx.textAlign = "center";
-                ctx.font = "bold 32px 'Playfair Display', serif"; ctx.fillText("neighbor.coffee", 192, 60);
-                ctx.font = "20px 'Playfair Display', serif"; ctx.fillText("x Amber pastry", 192, 90);
+                ctx.font = "bold 32px 'Kanit', serif"; ctx.fillText("Neighbor.coffee", 192, 60);
                 ctx.lineWidth = 4;
                 ctx.strokeRect(18, 118, 348, 348);
                 ctx.strokeRect(18, 482, 348, 348);
@@ -413,7 +412,7 @@
             else if (layout === 'halloween') {
                 ctx.textAlign = "center";
                 ctx.font = "bold 28px 'Kanit', sans-serif"; ctx.fillText("🎃 TRICK OR TREAT 👻", 192, 60);
-                ctx.font = "16px 'Kanit', sans-serif"; ctx.fillText("Happy Halloween from neighbor.coffee", 192, 90);
+                ctx.font = "16px 'Kanit', sans-serif"; ctx.fillText("Happy Halloween from Neighbor.coffee", 192, 90);
                 ctx.lineWidth = 6;
                 ctx.strokeRect(24, 120, 336, 336); ctx.strokeRect(18, 114, 348, 348);
                 ctx.strokeRect(24, 480, 336, 336); ctx.strokeRect(18, 474, 348, 348);
@@ -426,10 +425,11 @@
                 ctx.font = "28px sans-serif"; ctx.textAlign = "left"; ctx.fillText("♡  💬  ⌲", 15, 495);
                 ctx.textAlign = "right"; ctx.fillText("⚲", 370, 495);
                 ctx.textAlign = "left"; ctx.font = "bold 15px sans-serif"; ctx.fillText("9,999 likes", 15, 525);
-                ctx.fillText("neighbor.coffee", 15, 548);
+                ctx.fillText("neighbor.coffee : ", 15, 548);
                 ctx.font = "15px 'Kanit', sans-serif"; ctx.fillText(" HAVE A GOOD DAY! 🍰☕", 15 + ctx.measureText("neighbor.coffee ").width, 548);
                 let today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }).toUpperCase();
                 ctx.font = "12px sans-serif"; ctx.fillStyle = "#555"; ctx.fillText(today, 15, 575);
+                ctx.lineWidth = 20;
             }
             else if (layout === 'strip3') {
                 ctx.textAlign = "center";
@@ -438,13 +438,13 @@
             }
             else if (layout === 'polaroid') {
                 ctx.textAlign = "center";
-                ctx.font = "bold 28px 'Playfair Display', serif"; ctx.fillText("neighbor.coffee", 192, 420);
-                ctx.font = "16px 'Playfair Display', serif"; ctx.fillText("Memories with you 🤍", 192, 460);
+                ctx.font = "bold 28px 'Kanit', serif"; ctx.fillText("Neighbor.coffee", 192, 420);
+                ctx.font = "16px 'Kanit', serif"; ctx.fillText("Memories with you 🤍", 192, 460);
             }
             else if (layout === 'halloween') {
                 ctx.textAlign = "center";
                 ctx.font = "bold 28px sans-serif"; ctx.fillText("🕷️ 🕸️ 🦇 🕸️ 🕷️", 192, 880);
-                ctx.font = "20px 'Kanit', sans-serif"; ctx.fillText("BOO! HAVE A GOOD DAY!", 192, 920);
+                ctx.font = "20px 'Kanit', sans-serif"; ctx.fillText("BOO! HAVE A HALLOWEEN DAY!", 192, 920);
                 
                 ctx.font = "40px sans-serif";
                 ctx.fillText("🕸️", 40, 155); ctx.fillText("🕷️", 345, 155);
