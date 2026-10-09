@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Neighbor Photobooth Kiosk (58mm)</title>
+    <title>Neighbor Photobooth Kiosk</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap');
         
         * { box-sizing: border-box; }
         body, html {
@@ -23,12 +23,27 @@
         }
         .screen.active { display: flex; }
 
-        #screen-home h1 { font-size: 42px; color: #8B5A2B; margin-bottom: 5px; }
-        #screen-home p { font-size: 20px; color: #666; margin-bottom: 40px; }
-        
-        .layout-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; max-width: 600px;
+        /* --- หน้าจอ Idle (รอคนมากด) --- */
+        #screen-idle { background-color: #FAF8F5; cursor: pointer; }
+        .idle-title { font-family: 'Playfair Display', serif; font-size: 56px; color: #111; margin-bottom: 20px; line-height: 1.1; }
+        .idle-title span { font-family: 'Playfair Display', serif; font-style: italic; font-weight: normal; font-size: 40px; }
+        .idle-animation-box {
+            width: 120px; height: 200px; overflow: hidden; margin: 30px auto; border: 2px solid #ccc;
+            background: white; padding: 5px; box-shadow: 0 10px 20px rgba(0,0,0,0.1);
         }
+        .film-strip {
+            display: flex; flex-direction: column; gap: 5px;
+            animation: scrollFilm 4s linear infinite;
+        }
+        .film-strip div { width: 100%; height: 80px; background-color: #ddd; border-radius: 4px; }
+        @keyframes scrollFilm { 0% { transform: translateY(0); } 100% { transform: translateY(-170px); } }
+        .pulse-text { font-size: 20px; font-weight: 600; color: #555; animation: pulse 1.5s infinite; margin-top: 40px; }
+        @keyframes pulse { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
+
+        /* --- หน้าเลือก Layout --- */
+        #screen-home h1 { font-family: 'Playfair Display', serif; font-size: 42px; color: #8B5A2B; margin-bottom: 5px; }
+        #screen-home p { font-size: 20px; color: #666; margin-bottom: 40px; }
+        .layout-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; max-width: 600px; }
         .btn-layout {
             background-color: white; border: 3px solid #8B5A2B; border-radius: 20px;
             padding: 30px 20px; font-size: 24px; font-weight: 600; color: #8B5A2B;
@@ -39,12 +54,20 @@
         .btn-layout span { display: block; font-size: 16px; font-weight: 400; margin-top: 10px; color: #777; }
         .btn-layout:active span { color: #f0f0f0; }
 
+        /* --- หน้ากล้องถ่ายรูป --- */
         .camera-wrapper {
             position: relative; width: 90%; max-width: 600px; aspect-ratio: 1/1;
             border-radius: 20px; overflow: hidden; border: 6px solid #8B5A2B;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2); background-color: #000;
         }
         video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+        
+        /* กรอบที่จะโชว์ทับกล้อง */
+        #cameraOverlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 5; background-size: cover; background-position: center;
+            display: flex; flex-direction: column; justify-content: space-between; padding: 10px;
+        }
         
         #countdownOverlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -53,15 +76,22 @@
             text-shadow: 0px 5px 20px rgba(0,0,0,0.8); z-index: 10;
         }
 
-        #statusText { font-size: 24px; font-weight: 600; color: #8B5A2B; margin-top: 30px; height: 35px; }
+        #statusText { font-size: 24px; font-weight: 600; color: #8B5A2B; margin: 20px 0; height: 35px; }
 
+        .btn-main {
+            background-color: #8B5A2B; color: white; border: none; padding: 20px 60px;
+            font-size: 24px; font-weight: 600; font-family: 'Kanit', sans-serif;
+            border-radius: 40px; cursor: pointer; box-shadow: 0 6px 15px rgba(139, 90, 43, 0.3);
+        }
+        .btn-main:active { transform: scale(0.95); }
+
+        /* --- หน้าพรีวิว --- */
         .preview-container {
             width: 100%; max-width: 400px; height: 60vh; overflow-y: auto;
             border: 2px solid #ccc; background: white; border-radius: 10px;
             margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
         #receiptCanvas { width: 100%; display: block; }
-        
         .action-btns { display: flex; gap: 15px; width: 100%; max-width: 400px; }
         .btn-action {
             flex: 1; padding: 20px; font-size: 22px; font-family: 'Kanit', sans-serif;
@@ -70,12 +100,32 @@
         .btn-retake { background-color: #aaa; }
         .btn-print { background-color: #4CAF50; box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4); }
         .btn-action:active { transform: scale(0.95); }
+
     </style>
 </head>
 <body>
-    <div id="screen-home" class="screen active">
-        <h1>📸 photobooth.</h1>
-        <p>neighbor.coffee x Amber pastry</p>
+
+    <!-- Screen 0: Idle (Touch to start) -->
+    <div id="screen-idle" class="screen active" onclick="startApp()">
+        <div class="idle-title">
+            <span>neighbor</span><br>PHOTOBOOTH
+        </div>
+        <div class="idle-animation-box">
+            <div class="film-strip">
+                <div style="background:#555;"></div>
+                <div style="background:#888;"></div>
+                <div style="background:#bbb;"></div>
+                <div style="background:#555;"></div>
+            </div>
+        </div>
+        <div class="pulse-text">แตะหน้าจอเพื่อเริ่มต้น (TAP TO START)</div>
+    </div>
+
+    <!-- Screen 1: Home / Select Layout -->
+    <div id="screen-home" class="screen">
+        <h1>📸 Choose Frame</h1>
+        <p>เลือกกรอบรูปที่คุณต้องการ</p>
+        
         <div class="layout-grid">
             <button class="btn-layout" onclick="selectLayout('ig')">Instagram <span>(1 รูป)</span></button>
             <button class="btn-layout" onclick="selectLayout('strip3')">Photobooth <span>(3 รูป)</span></button>
@@ -84,14 +134,19 @@
         </div>
     </div>
 
+    <!-- Screen 2: Camera -->
     <div id="screen-camera" class="screen">
         <div class="camera-wrapper">
             <video id="camera" autoplay playsinline></video>
+            <!-- เลเยอร์โชว์กรอบทับวิดีโอ -->
+            <div id="cameraOverlay"></div>
             <div id="countdownOverlay"></div>
         </div>
         <div id="statusText">เตรียมตัวให้พร้อม...</div>
+        <button id="startCaptureBtn" class="btn-main" onclick="startCaptureSequence()">📸 เริ่มถ่ายรูปเลย!</button>
     </div>
 
+    <!-- Screen 3: Preview -->
     <div id="screen-preview" class="screen">
         <div class="preview-container">
             <canvas id="receiptCanvas" width="384"></canvas>
@@ -108,7 +163,41 @@
         const ctx = canvas.getContext('2d');
         const countdownEl = document.getElementById('countdownOverlay');
         const statusText = document.getElementById('statusText');
+        const cameraOverlay = document.getElementById('cameraOverlay');
+        const startCaptureBtn = document.getElementById('startCaptureBtn');
         let currentLayout = '';
+        
+        // --- Web Audio API สำหรับเสียงนับถอยหลัง ---
+        let audioCtx;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+        function playBeep(type) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            if (type === 'tick') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, audioCtx.currentTime); // เสียง ติ๊ด
+                gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.1);
+            } else if (type === 'snap') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(1200, audioCtx.currentTime); // เสียง แชะ (สูงยาวกว่า)
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            }
+        }
 
         async function initCamera() {
             try {
@@ -119,25 +208,60 @@
                     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                     video.srcObject = stream;
                 } catch (e) {
-                    alert("เปิดกล้องไม่ได้: " + e);
+                    console.log("กล้องเปิดไม่ได้");
                 }
             }
         }
-        initCamera();
 
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
         }
 
+        // เริ่มแอปจากหน้า Idle (ปลุกระบบเสียง + เปิดกล้อง)
+        function startApp() {
+            initAudio();
+            initCamera();
+            showScreen('screen-home');
+        }
+
         async function selectLayout(layout) {
+            initAudio();
             currentLayout = layout;
+            setupCameraOverlay(layout);
+            
             showScreen('screen-camera');
-            await new Promise(r => setTimeout(r, 1000)); 
-            startCaptureSequence();
+            startCaptureBtn.style.display = 'block';
+            statusText.innerText = "จัดท่าทางให้พร้อม แล้วกดเริ่ม!";
+        }
+
+        // ตั้งค่ากรอบ UI ทับกล้องสด
+        function setupCameraOverlay(layout) {
+            cameraOverlay.innerHTML = ''; // เคลียร์ของเก่า
+            cameraOverlay.style.border = "none";
+            
+            if (layout === 'ig') {
+                cameraOverlay.style.border = "2px solid rgba(255,255,255,0.5)";
+            } else if (layout === 'polaroid') {
+                cameraOverlay.style.border = "20px solid white";
+                cameraOverlay.style.borderBottom = "60px solid white";
+            } else if (layout === 'halloween') {
+                cameraOverlay.style.border = "6px solid #FF9800";
+                cameraOverlay.innerHTML = `
+                    <div style="font-size:40px; position:absolute; top:5px; left:5px;">🕸️</div>
+                    <div style="font-size:40px; position:absolute; top:5px; right:5px;">🕷️</div>
+                    <div style="font-size:40px; position:absolute; bottom:5px; left:5px;">🎃</div>
+                    <div style="font-size:40px; position:absolute; bottom:5px; right:5px;">🦇</div>
+                `;
+            } else {
+                cameraOverlay.style.border = "4px solid rgba(255,255,255,0.8)";
+            }
         }
 
         async function startCaptureSequence() {
+            initAudio();
+            startCaptureBtn.style.display = 'none'; // ซ่อนปุ่มตอนกำลังถ่าย
+            
             let photoCount = 1;
             if (currentLayout === 'strip3') photoCount = 3;
             if (currentLayout === 'halloween') photoCount = 2;
@@ -161,17 +285,21 @@
             
             statusText.innerText = "กำลังประมวลผล...";
             drawFooterTemplate(currentLayout);
-            setTimeout(() => { showScreen('screen-preview'); }, 500);
+            
+            // รอแปปนึงให้ระบบ Dithering ทำงานเสร็จ
+            setTimeout(() => { showScreen('screen-preview'); }, 800);
         }
 
         async function runCountdown() {
             countdownEl.style.display = 'flex';
             for (let i = 3; i > 0; i--) {
                 countdownEl.innerText = i;
+                playBeep('tick'); // เสียง ติ๊ด...
                 await new Promise(r => setTimeout(r, 1000));
             }
             countdownEl.innerText = "";
-            countdownEl.style.backgroundColor = "white";
+            playBeep('snap'); // เสียง แชะ!
+            countdownEl.style.backgroundColor = "white"; // แฟลช
             await new Promise(r => setTimeout(r, 150));
             countdownEl.style.backgroundColor = "transparent";
             countdownEl.style.display = 'none';
@@ -250,6 +378,13 @@
                 ctx.textAlign = "center";
                 ctx.font = "bold 28px sans-serif"; ctx.fillText("🕷️ 🕸️ 🦇 🕸️ 🕷️", 192, 880);
                 ctx.font = "20px sans-serif"; ctx.fillText("BOO! HAVE A GOOD DAY!", 192, 920);
+                
+                // วาดกราฟิกฮาโลวีนรอบๆ กรอบ (จะถูกแปลงเป็นขาวดำตอนปริ้น)
+                ctx.font = "40px sans-serif";
+                ctx.fillText("🕸️", 40, 155); ctx.fillText("🕷️", 345, 155);
+                ctx.fillText("🎃", 40, 445); ctx.fillText("🦇", 345, 445);
+                ctx.fillText("🕸️", 40, 515); ctx.fillText("🕷️", 345, 515);
+                ctx.fillText("🎃", 40, 805); ctx.fillText("🦇", 345, 805);
             }
         }
 
@@ -306,7 +441,7 @@
             let dataUrl = canvas.toDataURL("image/png");
             let base64Data = dataUrl.split(',')[1];
             window.location.href = "rawbt:data:image/png;base64," + base64Data;
-            setTimeout(resetToHome, 2000);
+            setTimeout(() => { showScreen('screen-idle'); }, 2000); // ปริ้นเสร็จกลับหน้า Idle
         }
 
         function resetToHome() {
