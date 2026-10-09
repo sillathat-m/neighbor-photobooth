@@ -1,6 +1,100 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neighbor Photobooth Kiosk (58mm)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
+        
+        * { box-sizing: border-box; }
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            font-family: 'Kanit', sans-serif;
+            background-color: #FDF4F5;
+            color: #333; overflow: hidden;
+            user-select: none; -webkit-user-select: none;
+        }
+
+        .screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px; text-align: center;
+        }
+        .screen.active { display: flex; }
+
+        #screen-home h1 { font-size: 42px; color: #8B5A2B; margin-bottom: 5px; }
+        #screen-home p { font-size: 20px; color: #666; margin-bottom: 40px; }
+        
+        .layout-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; max-width: 600px;
+        }
+        .btn-layout {
+            background-color: white; border: 3px solid #8B5A2B; border-radius: 20px;
+            padding: 30px 20px; font-size: 24px; font-weight: 600; color: #8B5A2B;
+            font-family: 'Kanit', sans-serif; cursor: pointer; transition: 0.2s;
+            box-shadow: 0 6px 15px rgba(139, 90, 43, 0.15);
+        }
+        .btn-layout:active { transform: scale(0.95); background-color: #8B5A2B; color: white; }
+        .btn-layout span { display: block; font-size: 16px; font-weight: 400; margin-top: 10px; color: #777; }
+        .btn-layout:active span { color: #f0f0f0; }
+
+        .camera-wrapper {
+            position: relative; width: 90%; max-width: 600px; aspect-ratio: 1/1;
+            border-radius: 20px; overflow: hidden; border: 6px solid #8B5A2B;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2); background-color: #000;
+        }
+        video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+        
+        #countdownOverlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: none; align-items: center; justify-content: center;
+            font-size: 180px; font-weight: bold; color: white;
+            text-shadow: 0px 5px 20px rgba(0,0,0,0.8); z-index: 10;
+        }
+
+        #statusText { font-size: 24px; font-weight: 600; color: #8B5A2B; margin-top: 30px; height: 35px; }
+
+        .preview-container {
+            width: 100%; max-width: 400px; height: 60vh; overflow-y: auto;
+            border: 2px solid #ccc; background: white; border-radius: 10px;
+            margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        #receiptCanvas { width: 100%; display: block; }
+        
+        .action-btns { display: flex; gap: 15px; width: 100%; max-width: 400px; }
+        .btn-action {
+            flex: 1; padding: 20px; font-size: 22px; font-family: 'Kanit', sans-serif;
+            border: none; border-radius: 15px; cursor: pointer; font-weight: 600; color: white;
+        }
+        .btn-retake { background-color: #aaa; }
+        .btn-print { background-color: #4CAF50; box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4); }
+        .btn-action:active { transform: scale(0.95); }
+    </style>
+</head>
+<body>
+    <div id="screen-home" class="screen active">
+        <h1>📸 photobooth.</h1>
+        <p>neighbor.coffee x Amber pastry</p>
+        <div class="layout-grid">
+            <button class="btn-layout" onclick="selectLayout('ig')">Instagram <span>(1 รูป)</span></button>
+            <button class="btn-layout" onclick="selectLayout('strip3')">Photobooth <span>(3 รูป)</span></button>
+            <button class="btn-layout" onclick="selectLayout('polaroid')">Polaroid <span>(1 รูป)</span></button>
+            <button class="btn-layout" onclick="selectLayout('halloween')">Halloween <span>(2 รูป)</span></button>
+        </div>
+    </div>
+
+    <div id="screen-camera" class="screen">
+        <div class="camera-wrapper">
+            <video id="camera" autoplay playsinline></video>
+            <div id="countdownOverlay"></div>
+        </div>
+        <div id="statusText">เตรียมตัวให้พร้อม...</div>
+    </div>
+
+    <div id="screen-preview" class="screen">
         <div class="preview-container">
-            <!-- ขนาดกระดาษ 80mm กว้าง 576px -->
-            <canvas id="receiptCanvas" width="576"></canvas>
+            <canvas id="receiptCanvas" width="384"></canvas>
         </div>
         <div class="action-btns">
             <button class="btn-action btn-retake" onclick="resetToHome()">ถ่ายใหม่</button>
@@ -14,11 +108,8 @@
         const ctx = canvas.getContext('2d');
         const countdownEl = document.getElementById('countdownOverlay');
         const statusText = document.getElementById('statusText');
-        
         let currentLayout = '';
-        const CANVAS_WIDTH = 576; // ขนาด 80mm
 
-        // เปิดกล้องอัตโนมัติ
         async function initCamera() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
@@ -28,69 +119,51 @@
                     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                     video.srcObject = stream;
                 } catch (e) {
-                    alert("เปิดกล้องไม่ได้ กรุณาตรวจสอบสิทธิ์: " + e);
+                    alert("เปิดกล้องไม่ได้: " + e);
                 }
             }
         }
         initCamera();
 
-        // เปลี่ยนหน้าจอ
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
         }
 
-        // 1. เลือกเลย์เอาต์แล้วเริ่มถ่าย
         async function selectLayout(layout) {
             currentLayout = layout;
             showScreen('screen-camera');
-            
-            // รอให้กล้องและหน้าจอพร้อมนิดนึง
             await new Promise(r => setTimeout(r, 1000)); 
             startCaptureSequence();
         }
 
-        // 2. จัดการคิวการถ่ายรูปตามเลย์เอาต์
         async function startCaptureSequence() {
             let photoCount = 1;
             if (currentLayout === 'strip3') photoCount = 3;
             if (currentLayout === 'halloween') photoCount = 2;
 
-            // ตั้งค่าความสูง Canvas ตามเลย์เอาต์
-            if (currentLayout === 'ig') canvas.height = 1000;
-            if (currentLayout === 'strip3') canvas.height = 2100;
-            if (currentLayout === 'polaroid') canvas.height = 850;
-            if (currentLayout === 'halloween') canvas.height = 1500;
+            if (currentLayout === 'ig') canvas.height = 600;
+            if (currentLayout === 'strip3') canvas.height = 1350;
+            if (currentLayout === 'polaroid') canvas.height = 520;
+            if (currentLayout === 'halloween') canvas.height = 960;
 
-            // เทพื้นขาว
             ctx.fillStyle = "white";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // วาด Header / กรอบรอไว้ก่อน
             drawBackgroundTemplate(currentLayout);
-
             let positions = getPhotoPositions(currentLayout);
 
             for (let i = 0; i < photoCount; i++) {
                 statusText.innerText = `ถ่ายรูปที่ ${i+1} / ${photoCount}`;
                 await runCountdown();
-                
-                // ถ่ายและประมวลผลรูปลง Canvas
                 drawCroppedVideo(positions[i].x, positions[i].y, positions[i].w, positions[i].h);
                 applyDithering(positions[i].x, positions[i].y, positions[i].w, positions[i].h);
             }
             
             statusText.innerText = "กำลังประมวลผล...";
-            
-            // วาดส่วนท้าย (Footer) ทับอีกรอบเผื่อมีกราฟิก
             drawFooterTemplate(currentLayout);
-            
-            setTimeout(() => {
-                showScreen('screen-preview');
-            }, 500);
+            setTimeout(() => { showScreen('screen-preview'); }, 500);
         }
 
-        // ฟังก์ชันนับถอยหลัง
         async function runCountdown() {
             countdownEl.style.display = 'flex';
             for (let i = 3; i > 0; i--) {
@@ -98,105 +171,92 @@
                 await new Promise(r => setTimeout(r, 1000));
             }
             countdownEl.innerText = "";
-            countdownEl.style.backgroundColor = "white"; // แฟลช
+            countdownEl.style.backgroundColor = "white";
             await new Promise(r => setTimeout(r, 150));
             countdownEl.style.backgroundColor = "transparent";
             countdownEl.style.display = 'none';
         }
 
-        // ฟังก์ชันคืนค่าพิกัดการวางรูป
         function getPhotoPositions(layout) {
-            if (layout === 'ig') return [{x: 0, y: 110, w: 576, h: 576}];
+            if (layout === 'ig') return [{x: 0, y: 70, w: 384, h: 384}];
             if (layout === 'strip3') return [
-                {x: 38, y: 160, w: 500, h: 500},
-                {x: 38, y: 700, w: 500, h: 500},
-                {x: 38, y: 1240, w: 500, h: 500}
+                {x: 20, y: 120, w: 344, h: 344},
+                {x: 20, y: 484, w: 344, h: 344},
+                {x: 20, y: 848, w: 344, h: 344}
             ];
-            if (layout === 'polaroid') return [{x: 38, y: 50, w: 500, h: 500}];
+            if (layout === 'polaroid') return [{x: 24, y: 24, w: 336, h: 336}];
             if (layout === 'halloween') return [
-                {x: 38, y: 220, w: 500, h: 500},
-                {x: 38, y: 760, w: 500, h: 500}
+                {x: 24, y: 120, w: 336, h: 336},
+                {x: 24, y: 480, w: 336, h: 336}
             ];
             return [];
         }
 
-        // วาดเลย์เอาต์ส่วนพื้นหลังและหัวกระดาษ
         function drawBackgroundTemplate(layout) {
             ctx.fillStyle = "black";
-            
             if (layout === 'ig') {
-                ctx.beginPath(); ctx.arc(50, 60, 24, 0, Math.PI * 2); ctx.lineWidth = 3; ctx.stroke();
-                ctx.textAlign = "left"; ctx.font = "bold 26px sans-serif"; ctx.fillText("neighbor.coffee", 90, 70);
-                ctx.font = "bold 36px sans-serif"; ctx.fillText("⋮", 530, 70);
-                // เส้นคั่นบน-ล่างรูป
-                ctx.lineWidth = 2;
-                ctx.beginPath(); ctx.moveTo(0, 110); ctx.lineTo(576, 110); ctx.moveTo(0, 686); ctx.lineTo(576, 686); ctx.stroke();
+                ctx.beginPath(); ctx.arc(35, 40, 16, 0, Math.PI * 2); ctx.lineWidth = 2; ctx.stroke();
+                ctx.textAlign = "left"; ctx.font = "bold 18px sans-serif"; ctx.fillText("neighbor.coffee", 62, 46);
+                ctx.font = "bold 24px sans-serif"; ctx.fillText("⋮", 355, 48);
+                ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(0, 70); ctx.lineTo(384, 70); ctx.moveTo(0, 454); ctx.lineTo(384, 454); ctx.stroke();
             } 
             else if (layout === 'strip3') {
                 ctx.textAlign = "center";
-                ctx.font = "bold 44px sans-serif"; ctx.fillText("neighbor.coffee", canvas.width / 2, 80);
-                ctx.font = "28px sans-serif"; ctx.fillText("x Amber pastry", canvas.width / 2, 120);
-                ctx.lineWidth = 6;
-                ctx.strokeRect(34, 156, 508, 508);
-                ctx.strokeRect(34, 696, 508, 508);
-                ctx.strokeRect(34, 1236, 508, 508);
+                ctx.font = "bold 32px sans-serif"; ctx.fillText("neighbor.coffee", 192, 60);
+                ctx.font = "20px sans-serif"; ctx.fillText("x Amber pastry", 192, 90);
+                ctx.lineWidth = 4;
+                ctx.strokeRect(18, 118, 348, 348);
+                ctx.strokeRect(18, 482, 348, 348);
+                ctx.strokeRect(18, 846, 348, 348);
             }
             else if (layout === 'polaroid') {
-                ctx.lineWidth = 6;
-                ctx.strokeRect(34, 46, 508, 508); // กรอบรูป
-                ctx.strokeRect(10, 10, 556, 830); // กรอบนอกสุดโพลาลอยด์
+                ctx.lineWidth = 4;
+                ctx.strokeRect(22, 22, 340, 340);
+                ctx.strokeRect(10, 10, 364, 500);
             }
             else if (layout === 'halloween') {
                 ctx.textAlign = "center";
-                ctx.font = "bold 48px sans-serif"; ctx.fillText("🎃 TRICK OR TREAT 👻", canvas.width / 2, 90);
-                ctx.font = "24px sans-serif"; ctx.fillText("Happy Halloween from neighbor.coffee", canvas.width / 2, 130);
-                
-                // กรอบรูปธีมฮาโลวีน (กรอบหนาซ้อน)
-                ctx.lineWidth = 8;
-                ctx.strokeRect(34, 216, 508, 508); ctx.strokeRect(26, 208, 524, 524);
-                ctx.strokeRect(34, 756, 508, 508); ctx.strokeRect(26, 748, 524, 524);
+                ctx.font = "bold 28px sans-serif"; ctx.fillText("🎃 TRICK OR TREAT 👻", 192, 60);
+                ctx.font = "16px sans-serif"; ctx.fillText("Happy Halloween from neighbor.coffee", 192, 90);
+                ctx.lineWidth = 6;
+                ctx.strokeRect(24, 120, 336, 336); ctx.strokeRect(18, 114, 348, 348);
+                ctx.strokeRect(24, 480, 336, 336); ctx.strokeRect(18, 474, 348, 348);
             }
         }
 
-        // วาดเลย์เอาต์ส่วนท้าย
         function drawFooterTemplate(layout) {
             ctx.fillStyle = "black";
             if (layout === 'ig') {
-                ctx.font = "40px sans-serif"; ctx.textAlign = "left"; ctx.fillText("♡  💬  ⌲", 20, 745);
-                ctx.textAlign = "right"; ctx.fillText("⚲", 550, 745);
-                
-                ctx.textAlign = "left";
-                ctx.font = "bold 22px sans-serif"; ctx.fillText("9,999 likes", 20, 790);
-                ctx.fillText("neighbor.coffee", 20, 825);
-                ctx.font = "22px sans-serif"; ctx.fillText(" HAVE A GOOD DAY! 🍰☕", 20 + ctx.measureText("neighbor.coffee ").width, 825);
-                
-                let today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase();
-                ctx.font = "18px sans-serif"; ctx.fillStyle = "#555"; ctx.fillText(today, 20, 865);
+                ctx.font = "28px sans-serif"; ctx.textAlign = "left"; ctx.fillText("♡  💬  ⌲", 15, 495);
+                ctx.textAlign = "right"; ctx.fillText("⚲", 370, 495);
+                ctx.textAlign = "left"; ctx.font = "bold 15px sans-serif"; ctx.fillText("9,999 likes", 15, 525);
+                ctx.fillText("neighbor.coffee", 15, 548);
+                ctx.font = "15px sans-serif"; ctx.fillText(" HAVE A GOOD DAY! 🍰☕", 15 + ctx.measureText("neighbor.coffee ").width, 548);
+                let today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }).toUpperCase();
+                ctx.font = "12px sans-serif"; ctx.fillStyle = "#555"; ctx.fillText(today, 15, 575);
             }
             else if (layout === 'strip3') {
                 ctx.textAlign = "center";
-                ctx.font = "bold 34px sans-serif"; ctx.fillText("HAVE A GOOD DAY!", canvas.width / 2, 1920);
-                ctx.font = "24px sans-serif"; ctx.fillText("( ˘ ³˘)♥", canvas.width / 2, 1970);
+                ctx.font = "bold 24px sans-serif"; ctx.fillText("HAVE A GOOD DAY!", 192, 1260);
+                ctx.font = "18px sans-serif"; ctx.fillText("( ˘ ³˘)♥", 192, 1300);
             }
             else if (layout === 'polaroid') {
-                // เขียนข้อความสไตล์ลายมือด้านล่าง
                 ctx.textAlign = "center";
-                ctx.font = "bold 36px 'Kanit', sans-serif"; ctx.fillText("neighbor.coffee", canvas.width / 2, 650);
-                ctx.font = "24px sans-serif"; ctx.fillText("Memories with you 🤍", canvas.width / 2, 700);
+                ctx.font = "bold 28px 'Kanit', sans-serif"; ctx.fillText("neighbor.coffee", 192, 420);
+                ctx.font = "16px sans-serif"; ctx.fillText("Memories with you 🤍", 192, 460);
             }
             else if (layout === 'halloween') {
                 ctx.textAlign = "center";
-                ctx.font = "bold 36px sans-serif"; ctx.fillText("🕷️ 🕸️ 🦇 🕸️ 🕷️", canvas.width / 2, 1370);
-                ctx.font = "28px sans-serif"; ctx.fillText("BOO! HAVE A GOOD DAY!", canvas.width / 2, 1420);
+                ctx.font = "bold 28px sans-serif"; ctx.fillText("🕷️ 🕸️ 🦇 🕸️ 🕷️", 192, 880);
+                ctx.font = "20px sans-serif"; ctx.fillText("BOO! HAVE A GOOD DAY!", 192, 920);
             }
         }
 
-        // ครอปวิดีโอตรงกลาง
         function drawCroppedVideo(dx, dy, dWidth, dHeight) {
             const vRatio = video.videoWidth / video.videoHeight;
             const dRatio = dWidth / dHeight;
             let sWidth, sHeight, sx, sy;
-
             if (vRatio > dRatio) {
                 sHeight = video.videoHeight;
                 sWidth = sHeight * dRatio;
@@ -208,7 +268,6 @@
                 sx = 0;
                 sy = (video.videoHeight - sHeight) / 2;
             }
-
             ctx.save();
             ctx.translate(dx + dWidth, dy);
             ctx.scale(-1, 1);
@@ -216,7 +275,6 @@
             ctx.restore();
         }
 
-        // Dithering แปลงเป็นจุดขาวดำ
         function applyDithering(startX, startY, width, height) {
             const imgData = ctx.getImageData(startX, startY, width, height);
             const data = imgData.data;
@@ -244,17 +302,13 @@
             data[idx+2] = Math.min(255, Math.max(0, data[idx+2] + adjErr));
         }
 
-        // สั่งปริ้น
         function printReceipt() {
             let dataUrl = canvas.toDataURL("image/png");
             let base64Data = dataUrl.split(',')[1];
             window.location.href = "rawbt:data:image/png;base64," + base64Data;
-            
-            // รอ 2 วิ แล้วเด้งกลับหน้าแรก
             setTimeout(resetToHome, 2000);
         }
 
-        // กลับหน้าหลัก
         function resetToHome() {
             showScreen('screen-home');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
