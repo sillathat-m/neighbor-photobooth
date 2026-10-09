@@ -1,215 +1,5 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neighbor Photobooth</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600&display=swap');
-        body {
-            font-family: 'Kanit', sans-serif;
-            text-align: center;
-            background-color: #FDF4F5;
-            margin: 0;
-            padding: 20px;
-        }
-        h2 { color: #8B5A2B; margin-bottom: 10px; }
-        
-        /* ปุ่มเลือกโหมด */
-        .mode-selector { margin-bottom: 15px; }
-        .btn-mode {
-            background-color: #ddd; color: #333; border: none; padding: 10px 20px;
-            font-size: 16px; font-family: 'Kanit', sans-serif; border-radius: 20px; cursor: pointer;
-            margin: 0 5px; transition: 0.2s;
-        }
-        .btn-mode.active { background-color: #8B5A2B; color: white; }
-
-        .camera-container {
-            position: relative; margin: 0 auto 20px auto; width: 320px; height: 320px;
-            border-radius: 20px; overflow: hidden; border: 4px solid #8B5A2B;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-        video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
-        
-        /* ตัวเลขนับถอยหลัง */
-        #countdownOverlay {
-            position: absolute; top:0; left:0; width:100%; height:100%;
-            display:none; align-items:center; justify-content:center;
-            font-size: 120px; font-weight: bold; color: white;
-            text-shadow: 0px 4px 15px rgba(0,0,0,0.6); z-index: 10;
         }
 
-        .btn {
-            background-color: #8B5A2B; color: white; border: none; padding: 15px 40px;
-            font-size: 18px; font-family: 'Kanit', sans-serif; border-radius: 30px;
-            cursor: pointer; box-shadow: 0 4px 10px rgba(139, 90, 43, 0.3); margin: 5px;
-        }
-        .btn-print { background-color: #4CAF50; }
-        
-        #receiptCanvas { display: none; margin: 20px auto; border: 1px solid #ccc; max-width: 100%; }
-    </style>
-</head>
-<body>
-
-    <h2>📸 photobooth.</h2>
-
-    <div class="mode-selector">
-        <button id="modeIg" class="btn-mode active">IG (1 รูป)</button>
-        <button id="modeStrip" class="btn-mode">Photobooth (3 รูป)</button>
-    </div>
-
-    <div class="camera-container">
-        <video id="camera" autoplay playsinline></video>
-        <div id="countdownOverlay"></div>
-    </div>
-
-    <button id="snapBtn" class="btn">📸 กดถ่ายรูป</button>
-    <button id="printBtn" class="btn btn-print" style="display: none;">🖨️ พิมพ์ใบเสร็จ</button>
-
-    <canvas id="receiptCanvas" width="384"></canvas>
-
-    <script>
-        const video = document.getElementById('camera');
-        const snapBtn = document.getElementById('snapBtn');
-        const printBtn = document.getElementById('printBtn');
-        const canvas = document.getElementById('receiptCanvas');
-        const ctx = canvas.getContext('2d');
-        const countdownEl = document.getElementById('countdownOverlay');
-        
-        let currentMode = 'ig'; // สถานะเริ่มต้น
-
-        // สลับโหมด
-        document.getElementById('modeIg').addEventListener('click', (e) => {
-            currentMode = 'ig';
-            e.target.classList.add('active');
-            document.getElementById('modeStrip').classList.remove('active');
-        });
-        document.getElementById('modeStrip').addEventListener('click', (e) => {
-            currentMode = 'strip';
-            e.target.classList.add('active');
-            document.getElementById('modeIg').classList.remove('active');
-        });
-
-        // เปิดกล้อง
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream => { video.srcObject = stream; })
-            .catch(err => { alert("ไม่สามารถเปิดกล้องได้: " + err); });
-
-        // ฟังก์ชันหน่วงเวลา
-        const sleep = ms => new Promise(r => setTimeout(r, ms));
-
-        // ฟังก์ชันนับถอยหลังและกระพริบแฟลช
-        async function runCountdown() {
-            countdownEl.style.display = 'flex';
-            for (let i = 3; i > 0; i--) {
-                countdownEl.innerText = i;
-                await sleep(1000);
-            }
-            countdownEl.innerText = "";
-            countdownEl.style.backgroundColor = "white"; // แฟลช
-            await sleep(150);
-            countdownEl.style.backgroundColor = "transparent";
-            countdownEl.style.display = 'none';
-        }
-
-        // ฟังก์ชันวาดภาพจากวิดีโอโดยคำนวณครอปตรงกลางให้สัดส่วนไม่เพี้ยน
-        function drawCroppedVideo(dx, dy, dWidth, dHeight) {
-            const vRatio = video.videoWidth / video.videoHeight;
-            const dRatio = dWidth / dHeight;
-            let sWidth, sHeight, sx, sy;
-
-            if (vRatio > dRatio) {
-                sHeight = video.videoHeight;
-                sWidth = sHeight * dRatio;
-                sx = (video.videoWidth - sWidth) / 2;
-                sy = 0;
-            } else {
-                sWidth = video.videoWidth;
-                sHeight = sWidth / dRatio;
-                sx = 0;
-                sy = (video.videoHeight - sHeight) / 2;
-            }
-
-            ctx.save();
-            ctx.translate(dx + dWidth, dy);
-            ctx.scale(-1, 1);
-            ctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, dWidth, dHeight);
-            ctx.restore();
-        }
-
-        snapBtn.addEventListener('click', async () => {
-            snapBtn.disabled = true;
-            printBtn.style.display = "none";
-
-            if (currentMode === 'ig') {
-                canvas.height = 600;
-                ctx.fillStyle = "white"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                // หัวกระดาษ IG
-                ctx.fillStyle = "black";
-                ctx.beginPath(); ctx.arc(35, 40, 16, 0, Math.PI * 2); ctx.lineWidth = 2; ctx.stroke();
-                ctx.textAlign = "left"; ctx.font = "bold 18px sans-serif"; ctx.fillText("neighbor.coffee", 62, 46);
-                ctx.font = "bold 24px sans-serif"; ctx.fillText("⋮", 355, 48);
-
-                await runCountdown();
-
-                drawCroppedVideo(0, 70, 384, 384);
-                applyDithering(0, 70, 384, 384);
-
-                // เส้นคั่นและไอคอน
-                ctx.lineWidth = 1;
-                ctx.beginPath(); ctx.moveTo(0, 70); ctx.lineTo(384, 70); ctx.moveTo(0, 454); ctx.lineTo(384, 454); ctx.stroke();
-                ctx.fillStyle = "black"; ctx.font = "28px sans-serif"; ctx.fillText("♡  💬  ⌲", 15, 495);
-                ctx.textAlign = "right"; ctx.fillText("⚲", 370, 495);
-                
-                // แคปชั่น
-                ctx.textAlign = "left";
-                ctx.font = "bold 15px sans-serif"; ctx.fillText("9,999 likes", 15, 525);
-                ctx.fillText("neighbor.coffee", 15, 548);
-                ctx.font = "15px sans-serif"; ctx.fillText(" HAVE A GOOD DAY! 🍰☕", 15 + ctx.measureText("neighbor.coffee ").width, 548);
-
-            } else {
-                // โหมด 3 รูป
-                canvas.height = 1350;
-                ctx.fillStyle = "white"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                // หัวกระดาษ Photobooth
-                ctx.fillStyle = "black"; ctx.textAlign = "center";
-                ctx.font = "bold 32px sans-serif"; ctx.fillText("neighbor.coffee", canvas.width / 2, 60);
-                ctx.font = "20px sans-serif"; ctx.fillText("x Amber pastry", canvas.width / 2, 90);
-
-                // ตำแหน่งแกน Y ของกรอบรูปทั้ง 3 รูป
-                let yPositions = [120, 484, 848];
-                
-                for(let i=0; i<3; i++) {
-                    await runCountdown();
-                    
-                    ctx.lineWidth = 4;
-                    ctx.strokeRect(18, yPositions[i]-2, 348, 348);
-                    
-                    drawCroppedVideo(20, yPositions[i], 344, 344);
-                    applyDithering(20, yPositions[i], 344, 344);
-                }
-
-                // ท้ายกระดาษ
-                ctx.textAlign = "center";
-                ctx.fillStyle = "black";
-                ctx.font = "bold 24px sans-serif"; ctx.fillText("HAVE A GOOD DAY!", canvas.width / 2, 1260);
-                ctx.font = "18px sans-serif"; ctx.fillText("( ˘ ³˘)♥", canvas.width / 2, 1300);
-            }
-
-            canvas.style.display = "block";
-            printBtn.style.display = "inline-block";
-            snapBtn.disabled = false;
-        });
-
-        printBtn.addEventListener('click', () => {
-            let dataUrl = canvas.toDataURL("image/png");
-            let base64Data = dataUrl.split(',')[1];
-            window.location.href = "rawbt:data:image/png;base64," + base64Data;
-        });
-
-        // อัลกอริทึมจุดไข่ปลา
         function applyDithering(startX, startY, width, height) {
             const imgData = ctx.getImageData(startX, startY, width, height);
             const data = imgData.data;
@@ -235,6 +25,18 @@
             data[idx] = Math.min(255, Math.max(0, data[idx] + adjErr));
             data[idx+1] = Math.min(255, Math.max(0, data[idx+1] + adjErr));
             data[idx+2] = Math.min(255, Math.max(0, data[idx+2] + adjErr));
+        }
+
+        function printReceipt() {
+            let dataUrl = canvas.toDataURL("image/png");
+            let base64Data = dataUrl.split(',')[1];
+            window.location.href = "rawbt:data:image/png;base64," + base64Data;
+            setTimeout(resetToHome, 2000);
+        }
+
+        function resetToHome() {
+            showScreen('screen-home');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
     </script>
 </body>
