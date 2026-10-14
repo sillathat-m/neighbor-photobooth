@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Neighbor Photobooth Kiosk</title>
+    <title>Neighbor Photobooth Kiosk (80mm)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&family=Playfair+Display:ital,wght@0,600;1,600&display=swap');
         
@@ -11,7 +11,7 @@
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
             font-family: 'Kanit', sans-serif;
-            background-color: #FAF8F5; /* สีพื้นหลังเหมือนหน้า Idle */
+            background-color: #FAF8F5;
             color: #111; overflow: hidden;
             user-select: none; -webkit-user-select: none;
         }
@@ -24,80 +24,68 @@
         }
         .screen.active { display: flex; }
 
-        /* --- หน้าจอ Idle (รอคนมากด) --- */
+        /* --- หน้าจอ Idle --- */
         #screen-idle { cursor: pointer; }
         .idle-title { font-family: 'Playfair Display', serif; font-size: 56px; color: #111; margin-bottom: 20px; line-height: 1.1; }
-        .idle-title span { font-family: 'Playfair Display', serif; font-style: italic; font-weight: normal; font-size: 40px; }
+        .idle-title span { font-style: italic; font-weight: normal; font-size: 40px; }
         .idle-animation-box {
             width: 120px; height: 200px; overflow: hidden; margin: 30px auto; border: 2px solid #ccc;
             background: white; padding: 5px; box-shadow: 0 10px 20px rgba(0,0,0,0.05);
         }
-        .film-strip {
-            display: flex; flex-direction: column; gap: 5px;
-            animation: scrollFilm 4s linear infinite;
-        }
+        .film-strip { display: flex; flex-direction: column; gap: 5px; animation: scrollFilm 4s linear infinite; }
         .film-strip div { width: 100%; height: 80px; background-color: #ddd; border-radius: 4px; }
         @keyframes scrollFilm { 0% { transform: translateY(0); } 100% { transform: translateY(-170px); } }
-        .pulse-text { font-family: 'Kanit', sans-serif; font-size: 20px; font-weight: 400; color: #555; animation: pulse 1.5s infinite; margin-top: 40px; }
+        .pulse-text { font-size: 20px; color: #555; animation: pulse 1.5s infinite; margin-top: 40px; }
         @keyframes pulse { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
 
-        /* --- หน้าเลือก Layout --- */
+        /* --- หน้าเลือก Layout (ปรับเป็น Carousel ปัดซ้ายขวา) --- */
         #screen-home h1 { font-family: 'Playfair Display', serif; font-size: 42px; color: #111; margin-bottom: 5px; }
-        #screen-home p { font-size: 18px; color: #555; margin-bottom: 40px; font-weight: 300; }
+        #screen-home p { font-size: 18px; color: #555; margin-bottom: 20px; font-weight: 300; }
         
-        .layout-grid { 
-            display: flex; flex-wrap: wrap; justify-content: center; gap: 25px; width: 100%; max-width: 800px; 
+        /* คอนเทนเนอร์สำหรับเลื่อน */
+        .carousel-container {
+            width: 100%; max-width: 900px; overflow-x: auto; scroll-snap-type: x mandatory;
+            display: flex; gap: 20px; padding: 20px; scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
         }
+        /* ซ่อน Scrollbar แต่ยังเลื่อนได้ */
+        .carousel-container::-webkit-scrollbar { display: none; }
         
         .frame-card {
+            scroll-snap-align: center; flex: 0 0 auto;
             background: #fff; border: 2px solid #eaeaea; border-radius: 20px;
-            width: 180px; padding: 25px 15px; cursor: pointer;
+            width: 220px; padding: 30px 15px; cursor: pointer;
             display: flex; flex-direction: column; align-items: center;
             box-shadow: 0 8px 20px rgba(0,0,0,0.04);
-            transition: all 0.2s ease;
-            animation: float 4s ease-in-out infinite;
+            transition: 0.2s;
         }
-        /* แอนิเมชันให้การ์ดลอยขึ้นลงต่างจังหวะกัน */
-        .frame-card:nth-child(1) { animation-delay: 0s; }
-        .frame-card:nth-child(2) { animation-delay: 0.5s; }
-        .frame-card:nth-child(3) { animation-delay: 1s; }
-        .frame-card:nth-child(4) { animation-delay: 1.5s; }
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-12px); }
-        }
-        
         .frame-card:active { transform: scale(0.95); border-color: #111; }
         
         /* CSS วาดตัวอย่างกรอบ */
         .mini-preview {
-            width: 80px; height: 110px; background: #fff; border: 2px solid #ddd;
+            width: 100px; height: 140px; background: #fff; border: 2px solid #ddd;
             margin-bottom: 20px; position: relative; display: flex; flex-direction: column; align-items: center;
             box-shadow: 2px 5px 10px rgba(0,0,0,0.05);
         }
         .mini-preview .box { background: #f4f4f4; border: 1px solid #e0e0e0; }
         
-        /* 1. IG */
-        .mini-ig { padding-top: 25px; }
-        .mini-ig::before { content: ''; position: absolute; top: 5px; left: 5px; width: 12px; height: 12px; border-radius: 50%; background: #ccc; }
-        .mini-ig .box { width: 70px; height: 60px; margin-top: 5px; }
+        .mini-ig { padding-top: 30px; }
+        .mini-ig::before { content: ''; position: absolute; top: 6px; left: 6px; width: 15px; height: 15px; border-radius: 50%; background: #ccc; }
+        .mini-ig .box { width: 90px; height: 80px; margin-top: 5px; }
         
-        /* 2. Strip 3 */
-        .mini-strip { height: 140px; justify-content: space-evenly; padding: 5px 0; }
-        .mini-strip .box { width: 60px; height: 38px; }
+        .mini-strip { height: 180px; justify-content: space-evenly; padding: 5px 0; }
+        .mini-strip .box { width: 75px; height: 48px; }
         
-        /* 3. Polaroid */
-        .mini-polaroid { padding: 6px; padding-bottom: 28px; }
+        .mini-polaroid { padding: 8px; padding-bottom: 35px; }
         .mini-polaroid .box { width: 100%; height: 100%; }
         
-        /* 4. Halloween */
-        .mini-hw { border-color: #FF9800; background: #FFF9F0; justify-content: space-evenly; padding: 5px 0;}
-        .mini-hw::after { content: '🎃'; position: absolute; bottom: 2px; right: 4px; font-size: 16px; }
-        .mini-hw::before { content: '🦇'; position: absolute; top: 2px; left: 4px; font-size: 14px; }
-        .mini-hw .box { width: 60px; height: 45px; border-color: #FFCC80; }
+        .mini-hw { border-color: #FF9800; background: #FFF9F0; justify-content: space-evenly; padding: 5px 0; height: 160px;}
+        .mini-hw::after { content: '🎃'; position: absolute; bottom: 2px; right: 4px; font-size: 20px; }
+        .mini-hw::before { content: '🦇'; position: absolute; top: 2px; left: 4px; font-size: 18px; }
+        .mini-hw .box { width: 75px; height: 55px; border-color: #FFCC80; }
 
-        .frame-name { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: bold; color: #111; }
-        .frame-desc { font-family: 'Kanit', sans-serif; font-size: 14px; color: #777; margin-top: 5px; font-weight: 300;}
+        .frame-name { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: bold; color: #111; }
+        .frame-desc { font-family: 'Kanit', sans-serif; font-size: 15px; color: #777; margin-top: 5px; font-weight: 300;}
 
         /* --- หน้ากล้องถ่ายรูป --- */
         .camera-wrapper {
@@ -109,8 +97,7 @@
         
         #cameraOverlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 5; background-size: cover; background-position: center;
-            display: flex; flex-direction: column; justify-content: space-between; padding: 10px;
+            pointer-events: none; z-index: 5; display: flex; flex-direction: column; justify-content: space-between; padding: 10px;
         }
         
         #countdownOverlay {
@@ -120,88 +107,65 @@
             text-shadow: 0px 5px 20px rgba(0,0,0,0.8); z-index: 10;
         }
 
-        #statusText { font-size: 24px; font-weight: 400; color: #111; margin: 20px 0; height: 35px; }
-
-        .btn-main {
-            background-color: #111; color: white; border: none; padding: 20px 60px;
-            font-size: 22px; font-weight: 600; font-family: 'Kanit', sans-serif;
-            border-radius: 40px; cursor: pointer; box-shadow: 0 6px 15px rgba(0,0,0,0.2);
-            transition: 0.2s;
-        }
+        #statusText { font-size: 24px; color: #111; margin: 20px 0; height: 35px; }
+        .btn-main { background-color: #111; color: white; border: none; padding: 20px 60px; font-size: 22px; font-family: 'Kanit', sans-serif; border-radius: 40px; cursor: pointer; box-shadow: 0 6px 15px rgba(0,0,0,0.2); }
         .btn-main:active { transform: scale(0.95); }
 
         /* --- หน้าพรีวิว --- */
         .preview-container {
             width: 100%; max-width: 400px; height: 60vh; overflow-y: auto;
-            border: 2px solid #ccc; background: white; border-radius: 10px;
-            margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border: 2px solid #ccc; background: white; border-radius: 10px; margin-bottom: 20px;
         }
         #receiptCanvas { width: 100%; display: block; }
         .action-btns { display: flex; gap: 15px; width: 100%; max-width: 400px; }
-        .btn-action {
-            flex: 1; padding: 20px; font-size: 20px; font-family: 'Kanit', sans-serif;
-            border: none; border-radius: 15px; cursor: pointer; font-weight: 600; color: white;
-        }
-        .btn-retake { background-color: #999; color: #fff; }
-        .btn-print { background-color: #111; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
-        .btn-action:active { transform: scale(0.95); }
+        .btn-action { flex: 1; padding: 20px; font-size: 20px; border-radius: 15px; border: none; cursor: pointer; color: white; }
+        .btn-retake { background-color: #999; }
+        .btn-print { background-color: #111; }
 
     </style>
 </head>
 <body>
 
-    <!-- Screen 0: Idle (Touch to start) -->
+    <!-- Screen 0: Idle -->
     <div id="screen-idle" class="screen active" onclick="startApp()">
-        <div class="idle-title">
-            <span>neighbor's</span><br>PHOTOBOOTH
-        </div>
+        <div class="idle-title"><span>neighbor's</span><br>PHOTOBOOTH</div>
         <div class="idle-animation-box">
             <div class="film-strip">
-                <div style="background:#555;"></div>
-                <div style="background:#888;"></div>
-                <div style="background:#bbb;"></div>
-                <div style="background:#555;"></div>
+                <div style="background:#555;"></div><div style="background:#888;"></div>
+                <div style="background:#bbb;"></div><div style="background:#555;"></div>
             </div>
         </div>
-        <div class="pulse-text">แตะหน้าจอเพื่อเริ่มต้น<br>(Tap to Start)</div>
+        <div class="pulse-text">แตะหน้าจอเพื่อเริ่มต้น</div>
     </div>
 
-    <!-- Screen 1: Home / Select Layout -->
+    <!-- Screen 1: Home -->
     <div id="screen-home" class="screen">
         <h1>Choose Frame</h1>
-        <p>เลือกกรอบรูปที่คุณต้องการ</p>
+        <p>เลื่อนซ้ายขวา เพื่อเลือกกรอบรูปที่คุณต้องการ</p>
         
-        <div class="layout-grid">
+        <div class="carousel-container">
             <div class="frame-card" onclick="selectLayout('ig')">
-                <div class="mini-preview mini-ig">
-                    <div class="box"></div>
-                </div>
+                <div class="mini-preview mini-ig"><div class="box"></div></div>
                 <div class="frame-name">Instagram</div>
-                <div class="frame-desc">1 รูปภาพ</div>
+                <div class="frame-desc">1 แอคชั่น</div>
             </div>
 
             <div class="frame-card" onclick="selectLayout('strip3')">
-                <div class="mini-preview mini-strip">
-                    <div class="box"></div><div class="box"></div><div class="box"></div>
-                </div>
+                <div class="mini-preview mini-strip"><div class="box"></div><div class="box"></div><div class="box"></div></div>
                 <div class="frame-name">Photobooth</div>
-                <div class="frame-desc">3 รูปภาพ</div>
+                <div class="frame-desc">3 แอคชั่น</div>
             </div>
 
             <div class="frame-card" onclick="selectLayout('polaroid')">
-                <div class="mini-preview mini-polaroid">
-                    <div class="box"></div>
-                </div>
+                <div class="mini-preview mini-polaroid"><div class="box"></div></div>
                 <div class="frame-name">Polaroid</div>
-                <div class="frame-desc">1 รูปภาพ</div>
+                <div class="frame-desc">1 แอคชั่น</div>
             </div>
 
             <div class="frame-card" onclick="selectLayout('halloween')">
-                <div class="mini-preview mini-hw">
-                    <div class="box"></div><div class="box"></div>
-                </div>
+                <div class="mini-preview mini-hw"><div class="box"></div><div class="box"></div></div>
                 <div class="frame-name">Halloween</div>
-                <div class="frame-desc">2 รูปภาพ</div>
+                <div class="frame-desc">2 แอคชั่น</div>
             </div>
         </div>
     </div>
@@ -220,7 +184,8 @@
     <!-- Screen 3: Preview -->
     <div id="screen-preview" class="screen">
         <div class="preview-container">
-            <canvas id="receiptCanvas" width="384"></canvas>
+            <!-- ขนาดกระดาษ 576px (80mm) -->
+            <canvas id="receiptCanvas" width="576"></canvas>
         </div>
         <div class="action-btns">
             <button class="btn-action btn-retake" onclick="resetToHome()">ถ่ายใหม่</button>
@@ -236,51 +201,55 @@
         const statusText = document.getElementById('statusText');
         const cameraOverlay = document.getElementById('cameraOverlay');
         const startCaptureBtn = document.getElementById('startCaptureBtn');
-        let currentLayout = '';
         
+        let currentLayout = '';
         let audioCtx;
+
+        /* ========================================================
+           ตั้งค่าไฟล์ PNG ของคุณตรงนี้ (Custom PNG Setup)
+           - หากออกแบบกรอบใน Canva/AI เสร็จแล้ว ให้เปลี่ยนใช้ `useCustomPng: true`
+           - แก้ไข `pngUrl` ให้ตรงกับชื่อไฟล์ที่คุณลากลงไปใน GitHub
+           - ภาพ PNG ต้องมีความกว้าง 576px (ความสูงตามต้องการ) พื้นหลังใส
+        ======================================================== */
+        const layoutConfigs = {
+            'ig': {
+                width: 576, height: 1000, photos: [{x: 0, y: 110, w: 576, h: 576}],
+                useCustomPng: true, // เปลี่ยนเป็น true ถ้ามีไฟล์รูปกรอบ
+                pngUrl: 'f1.png' 
+            },
+            'strip3': {
+                width: 576, height: 1900, 
+                photos: [{x: 38, y: 180, w: 500, h: 500}, {x: 38, y: 720, w: 500, h: 500}, {x: 38, y: 1260, w: 500, h: 500}],
+                useCustomPng: true,
+                pngUrl: 'f2.png' 
+            },
+            'polaroid': {
+                width: 576, height: 800, photos: [{x: 38, y: 60, w: 500, h: 500}],
+                useCustomPng: false,
+                pngUrl: 'frame-polaroid.png' 
+            },
+            'halloween': {
+                width: 576, height: 1400, photos: [{x: 38, y: 200, w: 500, h: 500}, {x: 38, y: 740, w: 500, h: 500}],
+                useCustomPng: false,
+                pngUrl: 'frame-halloween.png' 
+            }
+        };
+
         function initAudio() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
         }
         function playBeep(type) {
             if (!audioCtx) return;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            
-            if (type === 'tick') {
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(880, audioCtx.currentTime); 
-                gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.1);
-            } else if (type === 'snap') {
-                osc.type = 'square';
-                osc.frequency.setValueAtTime(1200, audioCtx.currentTime); 
-                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.3);
-            }
+            const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            if (type === 'tick') { osc.type = 'sine'; osc.frequency.setValueAtTime(880, audioCtx.currentTime); gain.gain.setValueAtTime(0.5, audioCtx.currentTime); osc.start(); osc.stop(audioCtx.currentTime + 0.1); } 
+            else if (type === 'snap') { osc.type = 'square'; osc.frequency.setValueAtTime(1200, audioCtx.currentTime); gain.gain.setValueAtTime(0.3, audioCtx.currentTime); osc.start(); osc.stop(audioCtx.currentTime + 0.3); }
         }
 
         async function initCamera() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
-                video.srcObject = stream;
-            } catch (err) {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                    video.srcObject = stream;
-                } catch (e) {
-                    console.log("กล้องเปิดไม่ได้");
-                }
-            }
+            try { video.srcObject = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } }); } 
+            catch (err) { try { video.srcObject = await navigator.mediaDevices.getUserMedia({ video: true }); } catch (e) { console.log("Camera error"); } }
         }
 
         function showScreen(screenId) {
@@ -288,203 +257,153 @@
             document.getElementById(screenId).classList.add('active');
         }
 
-        function startApp() {
-            initAudio();
-            initCamera();
-            showScreen('screen-home');
-        }
+        function startApp() { initAudio(); initCamera(); showScreen('screen-home'); }
 
         async function selectLayout(layout) {
-            initAudio();
-            currentLayout = layout;
-            setupCameraOverlay(layout);
+            initAudio(); currentLayout = layout;
+            cameraOverlay.innerHTML = ''; cameraOverlay.style.border = "none";
+            
+            // วาดกรอบหลอกๆ บนกล้องสด เพื่อให้กะระยะได้
+            if (layout === 'ig') cameraOverlay.style.border = "2px solid rgba(255,255,255,0.6)";
+            else if (layout === 'polaroid') { cameraOverlay.style.border = "24px solid white"; cameraOverlay.style.borderBottom = "60px solid white"; }
+            else if (layout === 'halloween') { cameraOverlay.style.border = "8px solid #FF9800"; }
+            else cameraOverlay.style.border = "4px solid rgba(255,255,255,0.8)";
             
             showScreen('screen-camera');
             startCaptureBtn.style.display = 'block';
-            statusText.innerText = "จัดท่าให้พร้อม ยิ้มเยอะๆ แล้วกดเริ่ม!";
-        }
-
-        function setupCameraOverlay(layout) {
-            cameraOverlay.innerHTML = ''; 
-            cameraOverlay.style.border = "none";
-            
-            if (layout === 'ig') {
-                cameraOverlay.style.border = "2px solid rgba(255,255,255,0.6)";
-            } else if (layout === 'polaroid') {
-                cameraOverlay.style.border = "24px solid white";
-                cameraOverlay.style.borderBottom = "60px solid white";
-            } else if (layout === 'halloween') {
-                cameraOverlay.style.border = "8px solid #FF9800";
-                cameraOverlay.innerHTML = `
-                    <div style="font-size:45px; position:absolute; top:5px; left:5px;">🕸️</div>
-                    <div style="font-size:45px; position:absolute; top:5px; right:5px;">🕷️</div>
-                    <div style="font-size:45px; position:absolute; bottom:5px; left:5px;">🎃</div>
-                    <div style="font-size:45px; position:absolute; bottom:5px; right:5px;">🦇</div>
-                `;
-            } else {
-                cameraOverlay.style.border = "4px solid rgba(255,255,255,0.8)";
-            }
+            statusText.innerText = "จัดท่าทางให้พร้อม แล้วกดเริ่ม!";
         }
 
         async function startCaptureSequence() {
-            initAudio();
-            startCaptureBtn.style.display = 'none'; 
+            initAudio(); startCaptureBtn.style.display = 'none'; 
             
-            let photoCount = 1;
-            if (currentLayout === 'strip3') photoCount = 3;
-            if (currentLayout === 'halloween') photoCount = 2;
+            const config = layoutConfigs[currentLayout];
+            canvas.height = config.height;
+            ctx.fillStyle = "white"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 1. ถ้าวาดพื้นหลังด้วยโค้ด (ไม่ใช่ PNG)
+            if (!config.useCustomPng) { drawBackgroundTemplate(currentLayout); }
 
-            if (currentLayout === 'ig') canvas.height = 600;
-            if (currentLayout === 'strip3') canvas.height = 1350;
-            if (currentLayout === 'polaroid') canvas.height = 520;
-            if (currentLayout === 'halloween') canvas.height = 960;
-
-            ctx.fillStyle = "white";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            drawBackgroundTemplate(currentLayout);
-            let positions = getPhotoPositions(currentLayout);
-
-            for (let i = 0; i < photoCount; i++) {
-                statusText.innerText = `ถ่ายรูปที่ ${i+1} / ${photoCount}`;
+            // 2. ถ่ายรูปตามพิกัด (สเกล 576px)
+            for (let i = 0; i < config.photos.length; i++) {
+                statusText.innerText = `ถ่ายรูปที่ ${i+1} / ${config.photos.length}`;
                 await runCountdown();
-                drawCroppedVideo(positions[i].x, positions[i].y, positions[i].w, positions[i].h);
-                applyDithering(positions[i].x, positions[i].y, positions[i].w, positions[i].h);
+                
+                const pos = config.photos[i];
+                drawCroppedVideo(pos.x, pos.y, pos.w, pos.h);
+                applyDithering(pos.x, pos.y, pos.w, pos.h);
             }
             
             statusText.innerText = "กำลังประมวลผล...";
-            drawFooterTemplate(currentLayout);
+
+            // 3. วาดภาพทับหน้า (PNG หรือ โค้ด Footer)
+            if (config.useCustomPng) {
+                // หากผู้ใช้เลือกเปิด PNG กรอบใส (Transparent) ให้โหลดมาแปะทับรูปลงไปตรงนี้
+                await drawPngOverlay(config.pngUrl);
+            } else {
+                drawFooterTemplate(currentLayout);
+            }
             
             setTimeout(() => { showScreen('screen-preview'); }, 800);
         }
 
+        // ฟังก์ชันโหลดไฟล์ PNG มาวาดทับ
+        function drawPngOverlay(url) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.crossOrigin = "Anonymous";
+                img.onload = () => {
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    resolve();
+                };
+                img.onerror = () => {
+                    console.log("ไม่พบไฟล์ PNG กรุณาอัปโหลดไฟล์ " + url);
+                    resolve(); // วาดไม่ติดก็ให้ไปต่อ
+                };
+                img.src = url;
+            });
+        }
+
         async function runCountdown() {
             countdownEl.style.display = 'flex';
-            for (let i = 3; i > 0; i--) {
-                countdownEl.innerText = i;
-                playBeep('tick'); 
-                await new Promise(r => setTimeout(r, 1000));
-            }
-            countdownEl.innerText = "";
-            playBeep('snap'); 
-            countdownEl.style.backgroundColor = "white"; 
-            await new Promise(r => setTimeout(r, 150));
-            countdownEl.style.backgroundColor = "transparent";
-            countdownEl.style.display = 'none';
+            for (let i = 3; i > 0; i--) { countdownEl.innerText = i; playBeep('tick'); await new Promise(r => setTimeout(r, 1000)); }
+            countdownEl.innerText = ""; playBeep('snap'); 
+            countdownEl.style.backgroundColor = "white"; await new Promise(r => setTimeout(r, 150));
+            countdownEl.style.backgroundColor = "transparent"; countdownEl.style.display = 'none';
         }
 
-        function getPhotoPositions(layout) {
-            if (layout === 'ig') return [{x: 0, y: 70, w: 384, h: 384}];
-            if (layout === 'strip3') return [
-                {x: 20, y: 120, w: 344, h: 344},
-                {x: 20, y: 484, w: 344, h: 344},
-                {x: 20, y: 848, w: 344, h: 344}
-            ];
-            if (layout === 'polaroid') return [{x: 24, y: 24, w: 336, h: 336}];
-            if (layout === 'halloween') return [
-                {x: 24, y: 120, w: 336, h: 336},
-                {x: 24, y: 480, w: 336, h: 336}
-            ];
-            return [];
-        }
-
+        /* ----------------------------------------------------
+           ชุดโค้ดวาดกรอบสำรอง (ใช้งานเมื่อยังไม่มีไฟล์ PNG) 
+           อัปเดตสเกลสำหรับ 576px ทั้งหมด
+        ---------------------------------------------------- */
         function drawBackgroundTemplate(layout) {
             ctx.fillStyle = "black";
             if (layout === 'ig') {
-                ctx.beginPath(); ctx.arc(35, 40, 16, 0, Math.PI * 2); ctx.lineWidth = 2; ctx.stroke();
-                ctx.textAlign = "left"; ctx.font = "bold 18px sans-serif"; ctx.fillText("neighbor.coffee", 62, 46);
-                ctx.font = "bold 24px sans-serif"; ctx.fillText("⋮", 355, 48);
-                ctx.lineWidth = 1;
-                ctx.beginPath(); ctx.moveTo(0, 70); ctx.lineTo(384, 70); ctx.moveTo(0, 454); ctx.lineTo(384, 454); ctx.stroke();
+                ctx.beginPath(); ctx.arc(50, 60, 24, 0, Math.PI * 2); ctx.lineWidth = 3; ctx.stroke();
+                ctx.textAlign = "left"; ctx.font = "bold 26px sans-serif"; ctx.fillText("neighbor.coffee", 90, 70);
+                ctx.font = "bold 36px sans-serif"; ctx.fillText("⋮", 530, 70);
+                ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, 110); ctx.lineTo(576, 110); ctx.moveTo(0, 686); ctx.lineTo(576, 686); ctx.stroke();
             } 
             else if (layout === 'strip3') {
-                ctx.textAlign = "center";
-                ctx.font = "bold 32px 'Kanit', serif"; ctx.fillText("Neighbor.coffee", 192, 60);
-                ctx.lineWidth = 4;
-                ctx.strokeRect(18, 118, 348, 348);
-                ctx.strokeRect(18, 482, 348, 348);
-                ctx.strokeRect(18, 846, 348, 348);
+                ctx.textAlign = "center"; ctx.font = "bold 44px 'Playfair Display', serif"; ctx.fillText("neighbor.coffee", 288, 80);
+                ctx.font = "28px 'Playfair Display', serif"; ctx.fillText("x Amber pastry", 288, 120);
+                ctx.lineWidth = 6; ctx.strokeRect(34, 176, 508, 508); ctx.strokeRect(34, 716, 508, 508); ctx.strokeRect(34, 1256, 508, 508);
             }
             else if (layout === 'polaroid') {
-                ctx.lineWidth = 4;
-                ctx.strokeRect(22, 22, 340, 340);
-                ctx.strokeRect(10, 10, 364, 500);
+                ctx.lineWidth = 6; ctx.strokeRect(34, 56, 508, 508); ctx.strokeRect(10, 10, 556, 780);
             }
             else if (layout === 'halloween') {
-                ctx.textAlign = "center";
-                ctx.font = "bold 28px 'Kanit', sans-serif"; ctx.fillText("🎃 TRICK OR TREAT 👻", 192, 60);
-                ctx.font = "16px 'Kanit', sans-serif"; ctx.fillText("Happy Halloween from Neighbor.coffee", 192, 90);
-                ctx.lineWidth = 6;
-                ctx.strokeRect(24, 120, 336, 336); ctx.strokeRect(18, 114, 348, 348);
-                ctx.strokeRect(24, 480, 336, 336); ctx.strokeRect(18, 474, 348, 348);
+                ctx.textAlign = "center"; ctx.font = "bold 44px 'Kanit', sans-serif"; ctx.fillText("🎃 TRICK OR TREAT 👻", 288, 80);
+                ctx.font = "24px 'Kanit', sans-serif"; ctx.fillText("Happy Halloween from neighbor.coffee", 288, 120);
+                ctx.lineWidth = 8; ctx.strokeRect(34, 196, 508, 508); ctx.strokeRect(26, 188, 524, 524);
+                ctx.strokeRect(34, 736, 508, 508); ctx.strokeRect(26, 728, 524, 524);
             }
         }
 
         function drawFooterTemplate(layout) {
             ctx.fillStyle = "black";
             if (layout === 'ig') {
-                ctx.font = "28px sans-serif"; ctx.textAlign = "left"; ctx.fillText("♡  💬  ⌲", 15, 495);
-                ctx.textAlign = "right"; ctx.fillText("⚲", 370, 495);
-                ctx.textAlign = "left"; ctx.font = "bold 15px sans-serif"; ctx.fillText("9,999 likes", 15, 525);
-                ctx.fillText("neighbor.coffee : ", 15, 548);
-                ctx.font = "15px 'Kanit', sans-serif"; ctx.fillText(" HAVE A GOOD DAY! 🍰☕", 15 + ctx.measureText("neighbor.coffee ").width, 548);
-                let today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }).toUpperCase();
-                ctx.font = "12px sans-serif"; ctx.fillStyle = "#555"; ctx.fillText(today, 15, 575);
-                ctx.lineWidth = 20;
+                ctx.font = "40px sans-serif"; ctx.textAlign = "left"; ctx.fillText("♡  💬  ⌲", 20, 745);
+                ctx.textAlign = "right"; ctx.fillText("⚲", 550, 745);
+                ctx.textAlign = "left"; ctx.font = "bold 22px sans-serif"; ctx.fillText("9,999 likes", 20, 790);
+                ctx.fillText("neighbor.coffee", 20, 825);
+                ctx.font = "22px 'Kanit', sans-serif"; ctx.fillText(" HAVE A GOOD DAY! 🍰☕", 20 + ctx.measureText("neighbor.coffee ").width, 825);
+                let today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase();
+                ctx.font = "18px sans-serif"; ctx.fillStyle = "#555"; ctx.fillText(today, 20, 865);
             }
             else if (layout === 'strip3') {
-                ctx.textAlign = "center";
-                ctx.font = "bold 24px 'Kanit', sans-serif"; ctx.fillText("HAVE A GOOD DAY!", 192, 1260);
-                ctx.font = "18px sans-serif"; ctx.fillText("( ˘ ³˘)♥", 192, 1300);
+                ctx.textAlign = "center"; ctx.font = "bold 34px 'Kanit', sans-serif"; ctx.fillText("HAVE A GOOD DAY!", 288, 1820);
+                ctx.font = "24px sans-serif"; ctx.fillText("( ˘ ³˘)♥", 288, 1870);
             }
             else if (layout === 'polaroid') {
-                ctx.textAlign = "center";
-                ctx.font = "bold 28px 'Kanit', serif"; ctx.fillText("Neighbor.coffee", 192, 420);
-                ctx.font = "16px 'Kanit', serif"; ctx.fillText("Memories with you 🤍", 192, 460);
+                ctx.textAlign = "center"; ctx.font = "bold 40px 'Playfair Display', serif"; ctx.fillText("neighbor.coffee", 288, 650);
+                ctx.font = "24px 'Playfair Display', serif"; ctx.fillText("Memories with you 🤍", 288, 700);
             }
             else if (layout === 'halloween') {
-                ctx.textAlign = "center";
-                ctx.font = "bold 28px sans-serif"; ctx.fillText("🕷️ 🕸️ 🦇 🕸️ 🕷️", 192, 880);
-                ctx.font = "20px 'Kanit', sans-serif"; ctx.fillText("BOO! HAVE A HALLOWEEN DAY!", 192, 920);
-                
-                ctx.font = "40px sans-serif";
-                ctx.fillText("🕸️", 40, 155); ctx.fillText("🕷️", 345, 155);
-                ctx.fillText("🎃", 40, 445); ctx.fillText("🦇", 345, 445);
-                ctx.fillText("🕸️", 40, 515); ctx.fillText("🕷️", 345, 515);
-                ctx.fillText("🎃", 40, 805); ctx.fillText("🦇", 345, 805);
+                ctx.textAlign = "center"; ctx.font = "bold 40px sans-serif"; ctx.fillText("🕷️ 🕸️ 🦇 🕸️ 🕷️", 288, 1310);
+                ctx.font = "28px 'Kanit', sans-serif"; ctx.fillText("BOO! HAVE A GOOD DAY!", 288, 1360);
+                ctx.font = "50px sans-serif"; ctx.fillText("🕸️", 60, 240); ctx.fillText("🕷️", 516, 240); ctx.fillText("🎃", 60, 670); ctx.fillText("🦇", 516, 670);
             }
         }
 
+        // ครอปวิดีโอตรงกลาง
         function drawCroppedVideo(dx, dy, dWidth, dHeight) {
-            const vRatio = video.videoWidth / video.videoHeight;
-            const dRatio = dWidth / dHeight;
+            const vRatio = video.videoWidth / video.videoHeight; const dRatio = dWidth / dHeight;
             let sWidth, sHeight, sx, sy;
-            if (vRatio > dRatio) {
-                sHeight = video.videoHeight;
-                sWidth = sHeight * dRatio;
-                sx = (video.videoWidth - sWidth) / 2;
-                sy = 0;
-            } else {
-                sWidth = video.videoWidth;
-                sHeight = sWidth / dRatio;
-                sx = 0;
-                sy = (video.videoHeight - sHeight) / 2;
-            }
-            ctx.save();
-            ctx.translate(dx + dWidth, dy);
-            ctx.scale(-1, 1);
-            ctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, dWidth, dHeight);
-            ctx.restore();
+            if (vRatio > dRatio) { sHeight = video.videoHeight; sWidth = sHeight * dRatio; sx = (video.videoWidth - sWidth) / 2; sy = 0; } 
+            else { sWidth = video.videoWidth; sHeight = sWidth / dRatio; sx = 0; sy = (video.videoHeight - sHeight) / 2; }
+            ctx.save(); ctx.translate(dx + dWidth, dy); ctx.scale(-1, 1);
+            ctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, dWidth, dHeight); ctx.restore();
         }
 
+        // แปลงรูปเป็นจุดไข่ปลา
         function applyDithering(startX, startY, width, height) {
-            const imgData = ctx.getImageData(startX, startY, width, height);
-            const data = imgData.data;
+            const imgData = ctx.getImageData(startX, startY, width, height); const data = imgData.data;
             for (let y = 0; y < height; y++) {
                 for (let x = 0; x < width; x++) {
                     const idx = (y * width + x) * 4;
                     const gray = Math.round(0.299 * data[idx] + 0.587 * data[idx+1] + 0.114 * data[idx+2]);
-                    const newColor = gray < 128 ? 0 : 255;
-                    const err = gray - newColor;
+                    const newColor = gray < 128 ? 0 : 255; const err = gray - newColor;
                     data[idx] = data[idx+1] = data[idx+2] = newColor;
                     distributeError(data, width, height, x+1, y, err, 7/16);
                     distributeError(data, width, height, x-1, y+1, err, 3/16);
@@ -495,25 +414,17 @@
             ctx.putImageData(imgData, startX, startY);
         }
         function distributeError(data, w, h, x, y, err, factor) {
-            if (x < 0 || x >= w || y >= h) return;
-            const idx = (y * w + x) * 4;
-            const adjErr = err * factor;
-            data[idx] = Math.min(255, Math.max(0, data[idx] + adjErr));
-            data[idx+1] = Math.min(255, Math.max(0, data[idx+1] + adjErr));
-            data[idx+2] = Math.min(255, Math.max(0, data[idx+2] + adjErr));
+            if (x < 0 || x >= w || y >= h) return; const idx = (y * w + x) * 4; const adjErr = err * factor;
+            data[idx] = Math.min(255, Math.max(0, data[idx] + adjErr)); data[idx+1] = Math.min(255, Math.max(0, data[idx+1] + adjErr)); data[idx+2] = Math.min(255, Math.max(0, data[idx+2] + adjErr));
         }
 
         function printReceipt() {
             let dataUrl = canvas.toDataURL("image/png");
-            let base64Data = dataUrl.split(',')[1];
-            window.location.href = "rawbt:data:image/png;base64," + base64Data;
+            window.location.href = "rawbt:data:image/png;base64," + dataUrl.split(',')[1];
             setTimeout(() => { showScreen('screen-idle'); }, 2000); 
         }
 
-        function resetToHome() {
-            showScreen('screen-home');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
+        function resetToHome() { showScreen('screen-home'); ctx.clearRect(0, 0, canvas.width, canvas.height); }
     </script>
 </body>
 </html>
