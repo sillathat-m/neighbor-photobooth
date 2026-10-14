@@ -49,7 +49,6 @@
         }
         .carousel-container::-webkit-scrollbar { display: none; }
         
-        /* ขยายขนาด Card ให้เน้นแต่รูป PNG */
         .frame-card {
             scroll-snap-align: center; flex: 0 0 auto;
             background: #fff; border: 2px solid #eaeaea; border-radius: 20px;
@@ -60,14 +59,12 @@
         }
         .frame-card:active { transform: scale(0.95); border-color: #111; }
         
-        /* สไตล์รูป PNG Preview ใหญ่ขึ้นเต็มใบ */
         .frame-png-preview {
             width: 100%; max-width: 240px; height: 350px; 
             object-fit: contain; margin: 0; 
             filter: drop-shadow(2px 5px 12px rgba(0,0,0,0.1));
         }
 
-        /* สำรองกรณี PNG โหลดไม่ติด */
         .mini-preview {
             width: 160px; height: 220px; background: #fff; border: 2px solid #ddd;
             margin: 0; position: relative; display: flex; flex-direction: column; align-items: center;
@@ -79,32 +76,54 @@
         .mini-polaroid { padding: 12px; padding-bottom: 50px; } .mini-polaroid .box { width: 100%; height: 100%; }
         .mini-hw { border-color: #FF9800; background: #FFF9F0; justify-content: space-evenly; padding: 8px 0; height: 250px;} .mini-hw::after { content: '🎃'; position: absolute; bottom: 5px; right: 8px; font-size: 30px; } .mini-hw::before { content: '🦇'; position: absolute; top: 5px; left: 8px; font-size: 26px; } .mini-hw .box { width: 110px; height: 85px; border-color: #FFCC80; }
 
-        /* ตัวอย่างคลาสข้อความ (ปัจจุบันซ่อนไว้ไม่ได้ใช้งานใน HTML) */
-        .frame-name { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: bold; color: #111; margin-top: 15px; }
-        .frame-desc { font-family: 'Kanit', sans-serif; font-size: 16px; color: #777; margin-top: 5px; font-weight: 300;}
-
         /* --- หน้ากล้องถ่ายรูป --- */
-        .camera-wrapper {
-            position: relative; width: 90%; max-width: 600px; aspect-ratio: 1/1;
-            border-radius: 20px; overflow: hidden; border: 6px solid #111;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15); background-color: #000;
+        /* ปรับปรุงโครงสร้างหน้าจอถ่ายรูปใหม่ ให้เห็นสัดส่วนภาพที่แท้จริง */
+        .live-preview-container {
+            position: relative; 
+            width: 100%; 
+            max-width: 400px; /* จำกัดความกว้างให้พอดีหน้าจอโทรศัพท์/แท็บเล็ตแนวตั้ง */
+            margin: 0 auto;
+            border: 2px solid #ccc;
+            background-color: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            /* เราจะใช้ JS คำนวณความสูง (aspect ratio) ให้ตรงกับกรอบที่เลือก */
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
-        
-        #cameraOverlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 5; display: flex; flex-direction: column; justify-content: space-between; padding: 10px;
+
+        /* วิดีโอจะถูกขยายให้เต็มกรอบ Container นี้เสมอ */
+        #camera { 
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; /* ครอปส่วนที่เกินทิ้ง เพื่อให้เต็มจอเสมอ */
+            transform: scaleX(-1); 
+            z-index: 1;
         }
-        
+
+        /* รูป PNG กรอบ จะมาซ้อนทับวิดีโอ */
+        #frameOverlay {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            object-fit: fill; /* ให้ยืดพอดีกรอบ 100% */
+            z-index: 2; /* อยู่เหนือวิดีโอ */
+            pointer-events: none; /* ไม่ให้คลิกโดน */
+            display: none;
+        }
+
         #countdownOverlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: none; align-items: center; justify-content: center;
-            font-size: 180px; font-family: 'Playfair Display', serif; font-weight: bold; color: white;
+            font-size: 150px; font-family: 'Playfair Display', serif; font-weight: bold; color: white;
             text-shadow: 0px 5px 20px rgba(0,0,0,0.8); z-index: 10;
         }
 
         #statusText { font-size: 24px; color: #111; margin: 20px 0; height: 35px; }
-        .btn-main { background-color: #111; color: white; border: none; padding: 20px 60px; font-size: 22px; font-family: 'Kanit', sans-serif; border-radius: 40px; cursor: pointer; box-shadow: 0 6px 15px rgba(0,0,0,0.2); }
+        .btn-main { background-color: #111; color: white; border: none; padding: 15px 40px; font-size: 22px; font-family: 'Kanit', sans-serif; border-radius: 40px; cursor: pointer; box-shadow: 0 6px 15px rgba(0,0,0,0.2); }
         .btn-main:active { transform: scale(0.95); }
 
         /* --- หน้าพรีวิว --- */
@@ -153,44 +172,41 @@
         <p>เลื่อนซ้ายขวา เพื่อเลือกกรอบรูปที่คุณต้องการ</p>
         
         <div class="carousel-container">
-            <!-- Frame: IG -->
             <div class="frame-card" onclick="selectLayout('ig')">
-                <img src="frame-ig.png" class="frame-png-preview" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <img src="f3.png" class="frame-png-preview" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <div class="mini-preview mini-ig" style="display:none;"><div class="box"></div></div>
-                <!-- 
-                ตัวอย่างโค้ดถ้าจะใส่ข้อความเพิ่ม:
-                <div class="frame-name">Instagram</div>
-                <div class="frame-desc">1 แอคชั่น</div> 
-                -->
             </div>
 
-            <!-- Frame: Strip -->
-            <div class="frame-card" onclick="selectLayout('strip3')">
-                <img src="f3.png" class="frame-png-preview" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            /*<div class="frame-card" onclick="selectLayout('strip3')">
+                <img src="frame-strip.png" class="frame-png-preview" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <div class="mini-preview mini-strip" style="display:none;"><div class="box"></div><div class="box"></div><div class="box"></div></div>
             </div>
 
-            <!-- Frame: Polaroid -->
             <div class="frame-card" onclick="selectLayout('polaroid')">
                 <img src="frame-polaroid.png" class="frame-png-preview" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <div class="mini-preview mini-polaroid" style="display:none;"><div class="box"></div></div>
             </div>
 
-            <!-- Frame: Halloween -->
             <div class="frame-card" onclick="selectLayout('halloween')">
                 <img src="frame-halloween.png" class="frame-png-preview" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <div class="mini-preview mini-hw" style="display:none;"><div class="box"></div><div class="box"></div></div>
-            </div>
+            </div>*/
         </div>
     </div>
 
     <!-- Screen 2: Camera -->
     <div id="screen-camera" class="screen">
-        <div class="camera-wrapper">
+        
+        <!-- Live Preview Container ที่ปรับขนาดตามกรอบ -->
+        <div id="livePreviewBox" class="live-preview-container">
+            <!-- กล้อง -->
             <video id="camera" autoplay playsinline></video>
-            <div id="cameraOverlay"></div>
+            <!-- รูปภาพกรอบซ้อนทับ -->
+            <img id="frameOverlay" src="">
+            <!-- นับถอยหลัง -->
             <div id="countdownOverlay"></div>
         </div>
+
         <div id="statusText">เตรียมตัวให้พร้อม...</div>
         <button id="startCaptureBtn" class="btn-main" onclick="startCaptureSequence()">📸 กดเพื่อถ่ายรูป</button>
     </div>
@@ -221,12 +237,14 @@
         const ctx = canvas.getContext('2d');
         const countdownEl = document.getElementById('countdownOverlay');
         const statusText = document.getElementById('statusText');
-        const cameraOverlay = document.getElementById('cameraOverlay');
         const startCaptureBtn = document.getElementById('startCaptureBtn');
+        const livePreviewBox = document.getElementById('livePreviewBox');
+        const frameOverlay = document.getElementById('frameOverlay');
         
         let currentLayout = '';
         let audioCtx;
         let printCopyCount = 1; 
+        let videoStream = null;
 
         const layoutConfigs = {
             'ig': {
@@ -261,8 +279,17 @@
         }
 
         async function initCamera() {
-            try { video.srcObject = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } }); } 
-            catch (err) { try { video.srcObject = await navigator.mediaDevices.getUserMedia({ video: true }); } catch (e) { console.log("Camera error"); } }
+            if (videoStream) return; // ถ่ายอยู่แล้ว ไม่ต้องเปิดซ้ำ
+            try { 
+                videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } }); 
+                video.srcObject = videoStream;
+            } 
+            catch (err) { 
+                try { 
+                    videoStream = await navigator.mediaDevices.getUserMedia({ video: true }); 
+                    video.srcObject = videoStream;
+                } catch (e) { console.log("Camera error"); } 
+            }
         }
 
         function showScreen(screenId) {
@@ -273,13 +300,25 @@
         function startApp() { initAudio(); initCamera(); showScreen('screen-home'); }
 
         async function selectLayout(layout) {
-            initAudio(); currentLayout = layout;
-            cameraOverlay.innerHTML = ''; cameraOverlay.style.border = "none";
+            initAudio(); 
+            currentLayout = layout;
+            const config = layoutConfigs[currentLayout];
             
-            if (layout === 'ig') cameraOverlay.style.border = "2px solid rgba(255,255,255,0.6)";
-            else if (layout === 'polaroid') { cameraOverlay.style.border = "24px solid white"; cameraOverlay.style.borderBottom = "60px solid white"; }
-            else if (layout === 'halloween') { cameraOverlay.style.border = "8px solid #FF9800"; }
-            else cameraOverlay.style.border = "4px solid rgba(255,255,255,0.8)";
+            // 1. คำนวณ Aspect Ratio เพื่อบีบ/ขยายกรอบจอพรีวิวให้เหมือนกระดาษจริง
+            const aspectRatio = config.width / config.height;
+            // ล็อกความสูงหน้าจอพรีวิวไว้ที่ 60vh (ไม่ให้เกินหน้าจอ) แล้วคำนวณกว้างตามสัดส่วน
+            livePreviewBox.style.height = '60vh'; 
+            livePreviewBox.style.width = `calc(60vh * ${aspectRatio})`;
+            
+            // 2. นำรูป PNG มาแปะทับกล้องสดๆ
+            if (config.useCustomPng) {
+                frameOverlay.src = config.pngUrl;
+                frameOverlay.style.display = 'block';
+                // ดักจับ error ถ้ารูปไม่มี
+                frameOverlay.onerror = function() { this.style.display = 'none'; };
+            } else {
+                frameOverlay.style.display = 'none';
+            }
             
             showScreen('screen-camera');
             startCaptureBtn.style.display = 'block';
@@ -334,55 +373,10 @@
             countdownEl.style.backgroundColor = "transparent"; countdownEl.style.display = 'none';
         }
 
-        function drawBackgroundTemplate(layout) {
-            ctx.fillStyle = "black";
-            if (layout === 'ig') {
-                ctx.beginPath(); ctx.arc(50, 60, 24, 0, Math.PI * 2); ctx.lineWidth = 3; ctx.stroke();
-                ctx.textAlign = "left"; ctx.font = "bold 26px sans-serif"; ctx.fillText("neighbor.coffee", 90, 70);
-                ctx.font = "bold 36px sans-serif"; ctx.fillText("⋮", 530, 70);
-                ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, 110); ctx.lineTo(576, 110); ctx.moveTo(0, 686); ctx.lineTo(576, 686); ctx.stroke();
-            } 
-            else if (layout === 'strip3') {
-                ctx.textAlign = "center"; ctx.font = "bold 44px 'Playfair Display', serif"; ctx.fillText("neighbor.coffee", 288, 80);
-                ctx.font = "28px 'Playfair Display', serif"; ctx.fillText("x Amber pastry", 288, 120);
-                ctx.lineWidth = 6; ctx.strokeRect(34, 176, 508, 508); ctx.strokeRect(34, 716, 508, 508); ctx.strokeRect(34, 1256, 508, 508);
-            }
-            else if (layout === 'polaroid') {
-                ctx.lineWidth = 6; ctx.strokeRect(34, 56, 508, 508); ctx.strokeRect(10, 10, 556, 780);
-            }
-            else if (layout === 'halloween') {
-                ctx.textAlign = "center"; ctx.font = "bold 44px 'Kanit', sans-serif"; ctx.fillText("🎃 TRICK OR TREAT 👻", 288, 80);
-                ctx.font = "24px 'Kanit', sans-serif"; ctx.fillText("Happy Halloween from neighbor.coffee", 288, 120);
-                ctx.lineWidth = 8; ctx.strokeRect(34, 196, 508, 508); ctx.strokeRect(26, 188, 524, 524);
-                ctx.strokeRect(34, 736, 508, 508); ctx.strokeRect(26, 728, 524, 524);
-            }
-        }
-
-        function drawFooterTemplate(layout) {
-            ctx.fillStyle = "black";
-            if (layout === 'ig') {
-                ctx.font = "40px sans-serif"; ctx.textAlign = "left"; ctx.fillText("♡  💬  ⌲", 20, 745);
-                ctx.textAlign = "right"; ctx.fillText("⚲", 550, 745);
-                ctx.textAlign = "left"; ctx.font = "bold 22px sans-serif"; ctx.fillText("9,999 likes", 20, 790);
-                ctx.fillText("neighbor.coffee", 20, 825);
-                ctx.font = "22px 'Kanit', sans-serif"; ctx.fillText(" HAVE A GOOD DAY! 🍰☕", 20 + ctx.measureText("neighbor.coffee ").width, 825);
-                let today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase();
-                ctx.font = "18px sans-serif"; ctx.fillStyle = "#555"; ctx.fillText(today, 20, 865);
-            }
-            else if (layout === 'strip3') {
-                ctx.textAlign = "center"; ctx.font = "bold 34px 'Kanit', sans-serif"; ctx.fillText("HAVE A GOOD DAY!", 288, 1820);
-                ctx.font = "24px sans-serif"; ctx.fillText("( ˘ ³˘)♥", 288, 1870);
-            }
-            else if (layout === 'polaroid') {
-                ctx.textAlign = "center"; ctx.font = "bold 40px 'Playfair Display', serif"; ctx.fillText("neighbor.coffee", 288, 650);
-                ctx.font = "24px 'Playfair Display', serif"; ctx.fillText("Memories with you 🤍", 288, 700);
-            }
-            else if (layout === 'halloween') {
-                ctx.textAlign = "center"; ctx.font = "bold 40px sans-serif"; ctx.fillText("🕷️ 🕸️ 🦇 🕸️ 🕷️", 288, 1310);
-                ctx.font = "28px 'Kanit', sans-serif"; ctx.fillText("BOO! HAVE A GOOD DAY!", 288, 1360);
-                ctx.font = "50px sans-serif"; ctx.fillText("🕸️", 60, 240); ctx.fillText("🕷️", 516, 240); ctx.fillText("🎃", 60, 670); ctx.fillText("🦇", 516, 670);
-            }
-        }
+        // ขอตัดฟังก์ชัน BackgroundTemplate กับ FooterTemplate ที่วาดเส้นออก 
+        // เพราะตอนนี้เปลี่ยนมาใช้ PNG แบบเต็มๆ 100% หมดแล้ว
+        function drawBackgroundTemplate(layout) { }
+        function drawFooterTemplate(layout) { }
 
         function drawCroppedVideo(dx, dy, dWidth, dHeight) {
             const vRatio = video.videoWidth / video.videoHeight; const dRatio = dWidth / dHeight;
