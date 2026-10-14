@@ -49,36 +49,39 @@
         }
         .carousel-container::-webkit-scrollbar { display: none; }
         
+        /* ขยายขนาด Card ให้เน้นแต่รูป PNG */
         .frame-card {
             scroll-snap-align: center; flex: 0 0 auto;
             background: #fff; border: 2px solid #eaeaea; border-radius: 20px;
-            width: 220px; padding: 30px 15px; cursor: pointer;
-            display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+            width: 280px; padding: 20px; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
             box-shadow: 0 8px 20px rgba(0,0,0,0.04);
             transition: 0.2s;
         }
         .frame-card:active { transform: scale(0.95); border-color: #111; }
         
-        /* สไตล์สำหรับรูป PNG Preview */
+        /* สไตล์รูป PNG Preview ใหญ่ขึ้นเต็มใบ */
         .frame-png-preview {
-            width: 100%; max-width: 110px; height: 160px; object-fit: contain;
-            margin-bottom: 15px; filter: drop-shadow(2px 5px 8px rgba(0,0,0,0.08));
+            width: 100%; max-width: 240px; height: 350px; 
+            object-fit: contain; margin: 0; 
+            filter: drop-shadow(2px 5px 12px rgba(0,0,0,0.1));
         }
 
         /* สำรองกรณี PNG โหลดไม่ติด */
         .mini-preview {
-            width: 100px; height: 140px; background: #fff; border: 2px solid #ddd;
-            margin-bottom: 20px; position: relative; display: flex; flex-direction: column; align-items: center;
+            width: 160px; height: 220px; background: #fff; border: 2px solid #ddd;
+            margin: 0; position: relative; display: flex; flex-direction: column; align-items: center;
             box-shadow: 2px 5px 10px rgba(0,0,0,0.05);
         }
         .mini-preview .box { background: #f4f4f4; border: 1px solid #e0e0e0; }
-        .mini-ig { padding-top: 30px; } .mini-ig::before { content: ''; position: absolute; top: 6px; left: 6px; width: 15px; height: 15px; border-radius: 50%; background: #ccc; } .mini-ig .box { width: 90px; height: 80px; margin-top: 5px; }
-        .mini-strip { height: 180px; justify-content: space-evenly; padding: 5px 0; } .mini-strip .box { width: 75px; height: 48px; }
-        .mini-polaroid { padding: 8px; padding-bottom: 35px; } .mini-polaroid .box { width: 100%; height: 100%; }
-        .mini-hw { border-color: #FF9800; background: #FFF9F0; justify-content: space-evenly; padding: 5px 0; height: 160px;} .mini-hw::after { content: '🎃'; position: absolute; bottom: 2px; right: 4px; font-size: 20px; } .mini-hw::before { content: '🦇'; position: absolute; top: 2px; left: 4px; font-size: 18px; } .mini-hw .box { width: 75px; height: 55px; border-color: #FFCC80; }
+        .mini-ig { padding-top: 45px; } .mini-ig::before { content: ''; position: absolute; top: 10px; left: 10px; width: 22px; height: 22px; border-radius: 50%; background: #ccc; } .mini-ig .box { width: 140px; height: 120px; margin-top: 5px; }
+        .mini-strip { height: 260px; justify-content: space-evenly; padding: 8px 0; } .mini-strip .box { width: 110px; height: 75px; }
+        .mini-polaroid { padding: 12px; padding-bottom: 50px; } .mini-polaroid .box { width: 100%; height: 100%; }
+        .mini-hw { border-color: #FF9800; background: #FFF9F0; justify-content: space-evenly; padding: 8px 0; height: 250px;} .mini-hw::after { content: '🎃'; position: absolute; bottom: 5px; right: 8px; font-size: 30px; } .mini-hw::before { content: '🦇'; position: absolute; top: 5px; left: 8px; font-size: 26px; } .mini-hw .box { width: 110px; height: 85px; border-color: #FFCC80; }
 
-        .frame-name { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: bold; color: #111; }
-        .frame-desc { font-family: 'Kanit', sans-serif; font-size: 15px; color: #777; margin-top: 5px; font-weight: 300;}
+        /* ตัวอย่างคลาสข้อความ (ปัจจุบันซ่อนไว้ไม่ได้ใช้งานใน HTML) */
+        .frame-name { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: bold; color: #111; margin-top: 15px; }
+        .frame-desc { font-family: 'Kanit', sans-serif; font-size: 16px; color: #777; margin-top: 5px; font-weight: 300;}
 
         /* --- หน้ากล้องถ่ายรูป --- */
         .camera-wrapper {
@@ -150,32 +153,33 @@
         <p>เลื่อนซ้ายขวา เพื่อเลือกกรอบรูปที่คุณต้องการ</p>
         
         <div class="carousel-container">
+            <!-- Frame: IG -->
             <div class="frame-card" onclick="selectLayout('ig')">
-                <img src="f3.png" class="frame-png-preview" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <img src="frame-ig.png" class="frame-png-preview" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <div class="mini-preview mini-ig" style="display:none;"><div class="box"></div></div>
+                <!-- 
+                ตัวอย่างโค้ดถ้าจะใส่ข้อความเพิ่ม:
                 <div class="frame-name">Instagram</div>
-                <div class="frame-desc">1 รูป</div>
+                <div class="frame-desc">1 แอคชั่น</div> 
+                -->
             </div>
 
+            <!-- Frame: Strip -->
             <div class="frame-card" onclick="selectLayout('strip3')">
-                <img src="frame-strip.png" class="frame-png-preview" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <img src="f3.png" class="frame-png-preview" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <div class="mini-preview mini-strip" style="display:none;"><div class="box"></div><div class="box"></div><div class="box"></div></div>
-                <div class="frame-name">Photobooth</div>
-                <div class="frame-desc">3 แอคชั่น</div>
             </div>
 
+            <!-- Frame: Polaroid -->
             <div class="frame-card" onclick="selectLayout('polaroid')">
                 <img src="frame-polaroid.png" class="frame-png-preview" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <div class="mini-preview mini-polaroid" style="display:none;"><div class="box"></div></div>
-                <div class="frame-name">Polaroid</div>
-                <div class="frame-desc">1 แอคชั่น</div>
             </div>
 
+            <!-- Frame: Halloween -->
             <div class="frame-card" onclick="selectLayout('halloween')">
                 <img src="frame-halloween.png" class="frame-png-preview" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <div class="mini-preview mini-hw" style="display:none;"><div class="box"></div><div class="box"></div></div>
-                <div class="frame-name">Halloween</div>
-                <div class="frame-desc">2 แอคชั่น</div>
             </div>
         </div>
     </div>
@@ -194,7 +198,6 @@
     <!-- Screen 3: Preview -->
     <div id="screen-preview" class="screen">
         <div class="preview-container">
-            <!-- ขนาดกระดาษ 576px (80mm) -->
             <canvas id="receiptCanvas" width="576"></canvas>
         </div>
         
@@ -223,11 +226,8 @@
         
         let currentLayout = '';
         let audioCtx;
-        let printCopyCount = 1; // ตัวแปรเก็บจำนวนแผ่น
+        let printCopyCount = 1; 
 
-        /* ========================================================
-           ตั้งค่าไฟล์ PNG & ระยะขอบ 80mm
-        ======================================================== */
         const layoutConfigs = {
             'ig': {
                 width: 576, height: 900, photos: [{x: 0, y: 110, w: 576, h: 576}],
@@ -308,7 +308,7 @@
 
             if (config.useCustomPng) {
                 let success = await drawPngOverlay(config.pngUrl);
-                if(!success) { drawFooterTemplate(currentLayout); } // สำรองถ้ารูปไม่โหลด
+                if(!success) { drawFooterTemplate(currentLayout); } 
             } else {
                 drawFooterTemplate(currentLayout);
             }
@@ -414,24 +414,21 @@
             data[idx] = Math.min(255, Math.max(0, data[idx] + adjErr)); data[idx+1] = Math.min(255, Math.max(0, data[idx+1] + adjErr)); data[idx+2] = Math.min(255, Math.max(0, data[idx+2] + adjErr));
         }
 
-        // --- ระบบเพิ่มลดจำนวนแผ่น ---
         function changeCopies(amount) {
             printCopyCount += amount;
             if (printCopyCount < 1) printCopyCount = 1;
-            if (printCopyCount > 5) printCopyCount = 5; // จำกัดสูงสุด 5 แผ่นป้องกันเมมโมรี่เต็ม
+            if (printCopyCount > 5) printCopyCount = 5; 
             document.getElementById('printCopies').innerText = printCopyCount;
         }
 
         function printReceipt() {
             if (printCopyCount === 1) {
-                // พิมพ์แผ่นเดียว
                 let dataUrl = canvas.toDataURL("image/png");
                 window.location.href = "rawbt:data:image/png;base64," + dataUrl.split(',')[1];
             } else {
-                // พิมพ์หลายแผ่น: สร้าง Canvas ต่อความยาวภาพแล้วสั่งตัดทีเดียว
                 let tempCanvas = document.createElement('canvas');
                 tempCanvas.width = canvas.width;
-                let cutMargin = 120; // พื้นที่ว่างระหว่างแผ่นสำหรับรอยตัด
+                let cutMargin = 120; 
                 tempCanvas.height = (canvas.height * printCopyCount) + (cutMargin * (printCopyCount - 1));
                 let tempCtx = tempCanvas.getContext('2d');
                 
@@ -442,7 +439,6 @@
                     let yPos = i * (canvas.height + cutMargin);
                     tempCtx.drawImage(canvas, 0, yPos);
                     
-                    // วาดรอยตัดและกรรไกรระหว่างแผ่น
                     if (i < printCopyCount - 1) {
                         tempCtx.fillStyle = "black";
                         tempCtx.font = "24px sans-serif";
@@ -454,13 +450,12 @@
                 let dataUrl = tempCanvas.toDataURL("image/png");
                 window.location.href = "rawbt:data:image/png;base64," + dataUrl.split(',')[1];
             }
-            // ปิดระบบ Auto-refresh ทิ้ง (ให้คนกด "เสร็จสิ้น" เอง)
         }
 
         function goToIdle() {
             showScreen('screen-idle');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            printCopyCount = 1; // รีเซ็ตจำนวน
+            printCopyCount = 1; 
             document.getElementById('printCopies').innerText = printCopyCount;
         }
 
